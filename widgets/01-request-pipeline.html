@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The request pipeline — .NET concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F3F5F6; --card:#FFFFFF; --ink:#12181F; --ink2:#55606B; --ink3:#8A949E;
+  --rule:#DFE4E7;
+  --in:#0F6E6A; --in-bg:#DEEFED;
+  --out:#3A4C9E; --out-bg:#E4E8F7;
+  --warn:#96650A; --warn-bg:#F8EEDA;
+  --stop:#9C3330; --stop-bg:#F9E7E6;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#0E1216; --card:#161B21; --ink:#E6EAED; --ink2:#9AA5AF; --ink3:#6B7681;
+    --rule:#262E36;
+    --in:#5DCAA5; --in-bg:#10312B;
+    --out:#93A6EE; --out-bg:#1A2140;
+    --warn:#E0A73E; --warn-bg:#3A2B0C;
+    --stop:#E58380; --stop-bg:#3A1D1C;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:48px 24px 72px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink3);margin:0 0 14px}
+h1{font-family:var(--mono);font-size:30px;font-weight:500;letter-spacing:-.01em;margin:0 0 14px;line-height:1.2}
+.thesis{font-size:18px;color:var(--ink2);margin:0 0 40px;max-width:60ch}
+.thesis b{color:var(--ink);font-weight:500}
+
+.layout{display:grid;grid-template-columns:196px 1fr;gap:28px;align-items:start}
+.rail{display:flex;flex-direction:column;gap:2px;position:sticky;top:24px}
+.rail-h{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink3);padding:0 0 10px 12px}
+.scn{font-family:var(--sans);font-size:14px;text-align:left;background:none;border:0;
+  border-left:2px solid transparent;color:var(--ink2);padding:9px 12px;cursor:pointer;
+  border-radius:0 6px 6px 0;transition:background .15s,color .15s,border-color .15s;width:100%}
+.scn:hover{background:var(--card);color:var(--ink)}
+.scn[aria-pressed=true]{background:var(--card);color:var(--ink);border-left-color:var(--in);font-weight:500}
+.scn:focus-visible{outline:2px solid var(--in);outline-offset:-2px}
+
+.panel{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:20px}
+.axis{display:grid;grid-template-columns:26px 1fr 168px 1fr;gap:8px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);padding:0 0 12px}
+.axis .a-in{color:var(--in)} .axis .a-out{color:var(--out);text-align:right}
+.stack{display:flex;flex-direction:column;gap:5px}
+.row{display:grid;grid-template-columns:26px 1fr 168px 1fr;gap:8px;align-items:stretch;
+  transition:opacity .3s}
+.row.skip{opacity:.28}
+.num{font-family:var(--mono);font-size:11px;color:var(--ink3);align-self:center;padding-top:1px}
+.cell{font-family:var(--mono);font-size:12px;color:var(--ink3);background:transparent;
+  padding:9px 11px;border-radius:6px;transition:background .25s,color .25s;
+  display:flex;align-items:center;min-height:38px}
+.cell.r{justify-content:flex-end;text-align:right}
+.name{font-size:14px;text-align:center;padding:9px 8px;border:1px solid var(--rule);
+  border-radius:6px;transition:background .25s,color .25s,border-color .25s;
+  display:flex;align-items:center;justify-content:center;min-height:38px}
+.lit-in{background:var(--in-bg);color:var(--in)}
+.lit-out{background:var(--out-bg);color:var(--out)}
+.lit-warn{background:var(--warn-bg);color:var(--warn)}
+.lit-stop{background:var(--stop-bg);color:var(--stop)}
+.name.lit-in{border-color:var(--in)} .name.lit-out{border-color:var(--out)}
+.name.lit-warn{border-color:var(--warn)} .name.lit-stop{border-color:var(--stop)}
+
+.verdict{margin-top:20px;border-top:1px solid var(--rule);padding-top:16px;
+  font-size:15px;color:var(--ink2);min-height:72px}
+.verdict code{font-family:var(--mono);font-size:13px;color:var(--ink);
+  background:var(--paper);padding:1px 5px;border-radius:4px}
+.verdict b{color:var(--ink);font-weight:500}
+.verdict .tag{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  display:block;margin-bottom:7px}
+.t-in{color:var(--in)} .t-warn{color:var(--warn)} .t-stop{color:var(--stop)}
+
+footer{margin-top:44px;padding-top:20px;border-top:1px solid var(--rule);
+  font-size:14px;color:var(--ink3)}
+footer a{color:var(--ink2)}
+
+@media (max-width:720px){
+  .wrap{padding:32px 16px 56px}
+  .layout{grid-template-columns:1fr;gap:20px}
+  .rail{position:static;flex-direction:row;flex-wrap:wrap;gap:6px}
+  .rail-h{display:none}
+  .scn{width:auto;border:1px solid var(--rule);border-radius:6px;padding:7px 12px}
+  .scn[aria-pressed=true]{border-color:var(--in)}
+  .axis,.row{grid-template-columns:22px 1fr;gap:6px}
+  .axis .a-in,.axis .a-out,.cell.r{display:none}
+  .name{grid-column:2}
+  .cell{grid-column:2;font-size:11px;min-height:0;padding:5px 10px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Chapter 01 · .NET concepts</p>
+  <h1>The request pipeline</h1>
+  <p class="thesis">A request travels <b>inward</b> through a chain of middleware, reaches your code, and the response travels back <b>outward</b> through the same chain in reverse. Not a queue — a nested onion.</p>
+
+  <div class="layout">
+    <div class="rail">
+      <p class="rail-h">Trace</p>
+      <button class="scn" id="s-normal" aria-pressed="false" onclick="run('normal')">Normal request</button>
+      <button class="scn" id="s-static" aria-pressed="false" onclick="run('static')">GET /site.css</button>
+      <button class="scn" id="s-noauth" aria-pressed="false" onclick="run('noauth')">Request, no token</button>
+      <button class="scn" id="s-broken" aria-pressed="false" onclick="run('broken')">Broken order</button>
+    </div>
+
+    <div class="panel">
+      <div class="axis"><span></span><span class="a-in">inbound</span><span></span><span class="a-out">outbound</span></div>
+      <div class="stack" id="stack"></div>
+      <div class="verdict" id="verdict"><span class="tag">Ready</span>Pick a trace to run it through the pipeline.</div>
+    </div>
+  </div>
+
+  <footer>Chapter 01 of <a href="../README.md">.NET concepts</a> · the written explanation lives in <code>concepts/01-the-request-pipeline.md</code></footer>
+</div>
+
+<script>
+var L=[
+ {k:'ex',   n:'Exception handler', i:'try {',                     o:'} catch → 500'},
+ {k:'https',n:'HTTPS redirect',    i:'http? → 301',               o:'add HSTS header'},
+ {k:'static',n:'Static files',     i:'file exists? → send it',    o:'—'},
+ {k:'routing',n:'UseRouting',      i:'select endpoint',           o:'—'},
+ {k:'authn',n:'Authentication',    i:'token → identity',          o:'—'},
+ {k:'authz',n:'Authorization',     i:'read [Authorize] → allow?', o:'—'},
+ {k:'end',  n:'Endpoint',          i:'run controller',            o:'write response'}
+];
+var stack=document.getElementById('stack'),V=document.getElementById('verdict'),timers=[];
+stack.innerHTML=L.map(function(l,x){return '<div class="row" id="row-'+l.k+'">'+
+ '<span class="num">'+String(x+1).padStart(2,'0')+'</span>'+
+ '<span class="cell" id="in-'+l.k+'">'+l.i+'</span>'+
+ '<span class="name" id="mid-'+l.k+'">'+l.n+'</span>'+
+ '<span class="cell r" id="out-'+l.k+'">'+l.o+'</span></div>';}).join('');
+
+var CL='lit-in lit-out lit-warn lit-stop';
+function reset(){timers.forEach(clearTimeout);timers=[];
+ L.forEach(function(l){['in-','mid-','out-'].forEach(function(p){
+   var e=document.getElementById(p+l.k);CL.split(' ').forEach(function(c){e.classList.remove(c);});});
+   document.getElementById('row-'+l.k).classList.remove('skip');});}
+
+function play(steps,tag,cls,msg){
+ var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,gap=reduce?0:340,d=0;
+ steps.forEach(function(s){timers.push(setTimeout(function(){
+   var t='lit-'+(s.t||s.side);
+   document.getElementById(s.side+'-'+s.k).classList.add(t);
+   document.getElementById('mid-'+s.k).classList.add(t);
+   if(s.skip)s.skip.forEach(function(k){document.getElementById('row-'+k).classList.add('skip');});
+ },d));d+=gap;});
+ timers.push(setTimeout(function(){
+   V.innerHTML='<span class="tag '+cls+'">'+tag+'</span>'+msg;},d));}
+
+var order=L.map(function(l){return l.k;});
+function run(mode){
+ reset();
+ ['normal','static','noauth','broken'].forEach(function(m){
+   document.getElementById('s-'+m).setAttribute('aria-pressed',String(m===mode));});
+
+ if(mode==='normal'){
+  play(order.map(function(k){return {k:k,side:'in'};})
+    .concat(order.slice().reverse().map(function(k){return {k:k,side:'out'};})),
+   'Completed','t-in',
+   'The response passes back out through <b>every</b> middleware, in <b>reverse</b> order. That is why the exception handler is registered first — it is the outermost layer, so everything else runs inside its <code>try</code> block.');
+ }
+ if(mode==='static'){
+  play([{k:'ex',side:'in'},{k:'https',side:'in'},
+        {k:'static',side:'in',t:'warn',skip:['routing','authn','authz','end']},
+        {k:'https',side:'out'},{k:'ex',side:'out'}],
+   'Short-circuited','t-warn',
+   'Static file middleware never calls <code>next()</code>, so routing and auth never run. Fast — but note the consequence: files in <code>wwwroot</code> are served to anyone. <code>[Authorize]</code> lives on <b>endpoints</b>, and a static file never reaches one.');
+ }
+ if(mode==='noauth'){
+  play([{k:'ex',side:'in'},{k:'https',side:'in'},{k:'static',side:'in'},{k:'routing',side:'in'},
+        {k:'authn',side:'in'},{k:'authz',side:'in',t:'stop',skip:['end']},
+        {k:'routing',side:'out'},{k:'https',side:'out'},{k:'ex',side:'out'}],
+   '401 Unauthorized','t-stop',
+   'Authorization rejects and never calls <code>next()</code>, so your controller is never reached. The response still unwinds outward through every layer above it.');
+ }
+ if(mode==='broken'){
+  play([{k:'ex',side:'in'},{k:'https',side:'in'},{k:'static',side:'in'},
+        {k:'authn',side:'in'},{k:'authz',side:'in',t:'stop'},
+        {k:'routing',side:'in'},{k:'end',side:'in',t:'warn'}],
+   'Silently unprotected','t-stop',
+   'With <code>UseAuthorization</code> <b>before</b> <code>UseRouting</code>, no endpoint has been selected yet — so there is no <code>[Authorize]</code> metadata to read. Authorization finds nothing to enforce, waves the request through, and the protected endpoint runs anonymously. No error, no warning. This is the single most important ordering rule in the pipeline.');
+ }
+}
+</script>
+</body>
+</html>
