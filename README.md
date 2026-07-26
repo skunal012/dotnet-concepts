@@ -45,7 +45,7 @@ Ordered by dependency, not by difficulty. Auth needs the pipeline. EF Core is ea
 | # | Chapter | Handbook | Widget | Cards |
 |---|---|---|---|---|
 | 01 | The request pipeline | ✅ | ✅ | ✅ |
-| 02 | Configuration as layers | ⬜ | — | ⬜ |
+| 02 | Configuration as layers | ✅ | — | ✅ |
 | 03 | DI and service lifetimes | ⬜ | ⬜ | ⬜ |
 | 04 | EF Core's mental model | ⬜ | ⬜ | ⬜ |
 | 05 | Async, threads and memory | ⬜ | ⬜ | ⬜ |
