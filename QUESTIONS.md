@@ -19,7 +19,7 @@ A question can only live in one chapter. Where two chapters both touch it, it's 
 | [03 · DI and service lifetimes](#ch03) ✅ | 21, 22, 61, 62, 63, 64, 65 | 7 |
 | [04 · EF Core's mental model](#ch04) ✅ | 28, 29, 56, 57, 58, 59, 60, 72 | 8 |
 | [05 · Async, threads and memory](#ch05) ✅ | 30, 36, 37, 38, 39, 40, 95, 96, 97, 98 | 10 |
-| [06 · Authentication and authorization](#ch06) ⬜ | 27, 48, 50, 80, 81, 82, 84 | 7 |
+| [06 · Authentication and authorization](#ch06) ✅ | 27, 48, 50, 80, 81, 82, 84 | 7 |
 | [07 · Testing and TDD](#ch07) ⬜ | 41, 42, 43, 44, 45 | 5 |
 | [08 · Build and ship](#ch08) ⬜ | 13, 46, 47, 49, 51, 52, 54, 55 | 8 |
 | [09 · Distributed and real-time](#ch09) ⬜ | 31, 32, 35, 53, 89 | 5 |
@@ -124,9 +124,9 @@ A question can only live in one chapter. Where two chapters both touch it, it's 
 ---
 
 <a id="ch06"></a>
-## 06 · Authentication and authorization ⬜
+## 06 · Authentication and authorization ✅
 
-**The concept:** authn establishes *identity* (a `ClaimsPrincipal`), authz evaluates *permission* against it — two separate middlewares, in that order, for a reason chapter 01 already explained.
+**The concept:** authn establishes *identity* (a `ClaimsPrincipal`), authz evaluates *permission* against it — two separate middlewares, in that order, for a reason chapter 01 already explained. → [`concepts/06-authentication-and-authorization.md`](concepts/06-authentication-and-authorization.md)
 
 | # | Question | Why it's this chapter |
 |---|---|---|

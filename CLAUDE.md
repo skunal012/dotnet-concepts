@@ -31,6 +31,7 @@ anki/               — tab-separated Anki import files
 - Chapter 03: DI and service lifetimes (concepts/ + widgets/ + anki/)
 - Chapter 04: EF Core's mental model (concepts/ + widgets/ + anki/)
 - Chapter 05: async, threads and memory (concepts/ + widgets/ + anki/)
+- Chapter 06: authentication and authorization (concepts/ + anki/, no widget by design)
 - QUESTIONS.md: all 100 questions assigned, verified no gaps or duplicates
 
 ## Chapter roadmap (dependency-ordered)
@@ -42,8 +43,8 @@ anki/               — tab-separated Anki import files
 | 03 | DI and service lifetimes         | ✅     | ✅ done         |
 | 04 | EF Core's mental model           | ✅     | ✅ done         |
 | 05 | Async, threads and memory        | ✅     | ✅ done         |
-| 06 | Authentication and authorization | next   | no              |
-| 07 | Testing and TDD                  | ⬜     | no              |
+| 06 | Authentication and authorization | ✅     | no              |
+| 07 | Testing and TDD                  | next   | no              |
 | 08 | Build and ship                   | ⬜     | no              |
 | 09 | Distributed and real-time        | ⬜     | yes             |
 | 10 | Platform and history             | ⬜     | no              |
