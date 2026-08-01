@@ -20,7 +20,7 @@ A question can only live in one chapter. Where two chapters both touch it, it's 
 | [04 · EF Core's mental model](#ch04) ✅ | 28, 29, 56, 57, 58, 59, 60, 72 | 8 |
 | [05 · Async, threads and memory](#ch05) ✅ | 30, 36, 37, 38, 39, 40, 95, 96, 97, 98 | 10 |
 | [06 · Authentication and authorization](#ch06) ✅ | 27, 48, 50, 80, 81, 82, 84 | 7 |
-| [07 · Testing and TDD](#ch07) ⬜ | 41, 42, 43, 44, 45 | 5 |
+| [07 · Testing and TDD](#ch07) ✅ | 41, 42, 43, 44, 45 | 5 |
 | [08 · Build and ship](#ch08) ⬜ | 13, 46, 47, 49, 51, 52, 54, 55 | 8 |
 | [09 · Distributed and real-time](#ch09) ⬜ | 31, 32, 35, 53, 89 | 5 |
 | [10 · Platform and history](#ch10) ⬜ | 1, 2, 3, 7, 14, 85, 86, 87, 88, 93, 94, 99, 100 | 13 |
@@ -141,16 +141,16 @@ A question can only live in one chapter. Where two chapters both touch it, it's 
 ---
 
 <a id="ch07"></a>
-## 07 · Testing and TDD ⬜
+## 07 · Testing and TDD ✅
 
-**The concept:** a test's value is what it *isolates* — units isolate one behaviour, integration tests isolate the wiring. Framework choice is a footnote.
+**The concept:** a test's value is what it *isolates* — units isolate one behaviour, integration tests isolate the wiring. Framework choice is a footnote. → [`concepts/07-testing-and-tdd.md`](concepts/07-testing-and-tdd.md)
 
 | # | Question | Why it's this chapter |
 |---|---|---|
 | 41 | How do you write unit tests? | The core mechanism |
 | 42 | xUnit, NUnit, and MSTest | The footnote — interchangeable, and the chapter says why that's the honest answer |
 | 43 | Integration tests vs unit tests | *Is* the isolation question, asked directly |
-| 44 | Logging API for troubleshooting | Observability as testing's production twin: both are about making behaviour inspectable |
+| 44 | Logging API for troubleshooting | Observability as testing's production twin: both are about making behaviour inspectable. Scoped to a single process — anything crossing a service boundary is Q35 in ch. 09 |
 | 45 | What is the TDD approach? | Red-green-refactor as a design pressure, not a ritual |
 
 ---
@@ -182,7 +182,7 @@ A question can only live in one chapter. Where two chapters both touch it, it's 
 |---|---|---|
 | 31 | What is SignalR and its use cases? | Server-initiated transport |
 | 32 | Build real-time applications | Same question phrased as a goal |
-| 35 | How do you perform logging? | In one process it's diagnostics; across services it's correlation — it earns its place here |
+| 35 | How do you perform logging? | In one process it's diagnostics; across services it's correlation — it earns its place here. Boundary with Q44: ch. 07 §8 covers `ILogger<T>` as a substitutable seam within one process and defers correlation, trace context and aggregation to here |
 | 53 | Best practices for microservices architecture | The contract question at system scale |
 | 89 | Support for gRPC | Typed, binary, service-to-service transport |
 

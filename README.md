@@ -50,7 +50,7 @@ Ordered by dependency, not by difficulty. Auth needs the pipeline. EF Core is ea
 | 04 | EF Core's mental model | [✅](concepts/04-ef-cores-mental-model.md) | [✅](widgets/04-ef-cores-mental-model.html) | [✅](anki/04-ef-cores-mental-model.txt) |
 | 05 | Async, threads and memory | [✅](concepts/05-async-threads-and-memory.md) | [✅](widgets/05-async-threads-and-memory.html) | [✅](anki/05-async-threads-and-memory.txt) |
 | 06 | Authentication and authorization | [✅](concepts/06-authentication-and-authorization.md) | — | [✅](anki/06-authentication-and-authorization.txt) |
-| 07 | Testing and TDD | ⬜ | — | ⬜ |
+| 07 | Testing and TDD | [✅](concepts/07-testing-and-tdd.md) | — | [✅](anki/07-testing-and-tdd.txt) |
 | 08 | Build and ship | ⬜ | — | ⬜ |
 | 09 | Distributed and real-time | ⬜ | ⬜ | ⬜ |
 | 10 | Platform and history | ⬜ | — | ⬜ |

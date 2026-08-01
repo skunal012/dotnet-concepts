@@ -323,4 +323,4 @@ Chapter 07 asks how you know any of this works: 41–45.
 
 ## Next
 
-→ `07-testing-and-tdd.md` — §6 argued that an authorization handler is testable without a web server, and chapter 03 argued that DI is what makes any of it substitutable. The next chapter is what you do with that.
+→ [`07-testing-and-tdd.md`](07-testing-and-tdd.md) — §6 argued that an authorization handler is testable without a web server, and chapter 03 argued that DI is what makes any of it substitutable. The next chapter is what you do with that.
