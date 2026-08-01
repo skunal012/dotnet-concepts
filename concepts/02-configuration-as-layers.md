@@ -2,6 +2,8 @@
 
 > **The one idea:** configuration is not a file. It is a single flat dictionary of string keys, assembled by stacking ordered providers, where the last provider to supply a key wins.
 
+▶ **Widget:** [`widgets/02-configuration-as-layers.html`](../widgets/02-configuration-as-layers.html) — resolve a key down through the provider stack and see which layer claims it. Open it in any browser; no build step.
+
 ---
 
 ## Why this concept exists
@@ -258,4 +260,4 @@ Chapter 12 covers the adjacent mechanical question this one deliberately leaves 
 
 ## Next
 
-→ `03-di-and-service-lifetimes.md` — `IOptions<T>` was already a lifetime question. The next chapter is the model that generated the answer.
+→ [`03-di-and-service-lifetimes.md`](03-di-and-service-lifetimes.md) — `IOptions<T>` was already a lifetime question. The next chapter is the model that generated the answer.

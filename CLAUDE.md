@@ -68,7 +68,9 @@ Every chapter has: one-sentence thesis → why the concept exists → the mechan
 
 **Handbook** (`concepts/NN-slug.md`): The explanation. Written as an argument with a thesis running through it, not a reference page. This is the source of truth — the other two derive from it.
 
-**Widget** (`widgets/NN-slug.html`): Only for concepts where motion or ordering carries meaning (~5 of 12). Standalone HTML, works offline, no build step. System fonts fallback, dark mode via `prefers-color-scheme`, `prefers-reduced-motion` respected. See `widgets/01-request-pipeline.html` for the reference implementation.
+**Widget** (`widgets/NN-slug.html`): Only for concepts where motion or ordering carries meaning (~5 of 12). Standalone HTML, no build step, single file — all CSS and JS inline. Dark mode via `prefers-color-scheme`, `prefers-reduced-motion` respected, real `<button>`s with `aria-pressed` rather than clickable divs. IBM Plex is pulled from Google Fonts with a full system-font fallback stack, so the widget renders correctly offline — it just falls back to system fonts. See `widgets/01-request-pipeline.html` for the reference implementation.
+
+Every widget must be linked from its chapter (the `▶ **Widget:**` line under the thesis) and from the README roadmap table. A widget nobody can find from the handbook is a widget that does not exist.
 
 **Anki cards** (`anki/NN-slug.txt`): Tab-separated, tags in column 3. Cards test *why*, never *what*. "What is middleware?" is worthless. "What happens if UseAuthorization runs before UseRouting?" is unfakeable. Format:
 

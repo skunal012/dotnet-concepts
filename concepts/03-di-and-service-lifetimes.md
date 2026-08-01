@@ -2,6 +2,8 @@
 
 > **The one idea:** you register a *recipe* and a *lifetime*, and the container builds the whole object graph on demand — the lifetime decides which cache the instance is stored in and when it is disposed. Almost every hard DI bug is a lifetime mismatch.
 
+▶ **Widget:** [`widgets/03-di-and-service-lifetimes.html`](../widgets/03-di-and-service-lifetimes.html) — run the captive-dependency and transient-leak scenarios and watch which cache holds what. Open it in any browser; no build step.
+
 ---
 
 ## Why this concept exists
