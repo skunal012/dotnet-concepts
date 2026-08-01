@@ -259,4 +259,4 @@ Chapter 06 turns to the request again, and to the two questions the pipeline del
 
 ## Next
 
-→ `06-authentication-and-authorization.md` — chapter 01 put `UseAuthentication` and `UseAuthorization` in the pipeline and did not say what they do. This is that, plus why the order between them is not arbitrary.
+→ [`06-authentication-and-authorization.md`](06-authentication-and-authorization.md) — chapter 01 put `UseAuthentication` and `UseAuthorization` in the pipeline and did not say what they do. This is that, plus why the order between them is not arbitrary.
