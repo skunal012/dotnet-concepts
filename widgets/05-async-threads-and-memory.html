@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Async, threads and memory — .NET concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F3F5F6; --card:#FFFFFF; --ink:#12181F; --ink2:#55606B; --ink3:#8A949E;
+  --rule:#DFE4E7;
+  --in:#0F6E6A; --in-bg:#DEEFED;
+  --out:#3A4C9E; --out-bg:#E4E8F7;
+  --warn:#96650A; --warn-bg:#F8EEDA;
+  --stop:#9C3330; --stop-bg:#F9E7E6;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#0E1216; --card:#161B21; --ink:#E6EAED; --ink2:#9AA5AF; --ink3:#6B7681;
+    --rule:#262E36;
+    --in:#5DCAA5; --in-bg:#10312B;
+    --out:#93A6EE; --out-bg:#1A2140;
+    --warn:#E0A73E; --warn-bg:#3A2B0C;
+    --stop:#E58380; --stop-bg:#3A1D1C;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:48px 24px 72px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink3);margin:0 0 14px}
+h1{font-family:var(--mono);font-size:30px;font-weight:500;letter-spacing:-.01em;margin:0 0 14px;line-height:1.2}
+.thesis{font-size:18px;color:var(--ink2);margin:0 0 40px;max-width:62ch}
+.thesis b{color:var(--ink);font-weight:500}
+
+.layout{display:grid;grid-template-columns:196px 1fr;gap:28px;align-items:start}
+.rail{display:flex;flex-direction:column;gap:2px;position:sticky;top:24px}
+.rail-h{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink3);padding:0 0 10px 12px}
+.scn{font-family:var(--sans);font-size:14px;text-align:left;background:none;border:0;
+  border-left:2px solid transparent;color:var(--ink2);padding:9px 12px;cursor:pointer;
+  border-radius:0 6px 6px 0;transition:background .15s,color .15s,border-color .15s;width:100%}
+.scn:hover{background:var(--card);color:var(--ink)}
+.scn[aria-pressed=true]{background:var(--card);color:var(--ink);border-left-color:var(--in);font-weight:500}
+.scn:focus-visible{outline:2px solid var(--in);outline-offset:-2px}
+
+.panel{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:20px}
+.band{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);border:1px dashed var(--rule);border-radius:6px;padding:7px 11px;
+  margin:0 0 16px;transition:border-color .25s,color .25s,background .25s}
+.band.open{border-style:solid;border-color:var(--in);color:var(--in);background:var(--in-bg)}
+.band.root{border-style:solid;border-color:var(--out);color:var(--out);background:var(--out-bg)}
+.band.bad{border-style:solid;border-color:var(--stop);color:var(--stop);background:var(--stop-bg)}
+
+.zone{margin-bottom:14px}
+.zone-h{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);margin:0 0 7px;display:flex;justify-content:space-between;align-items:baseline}
+.zone-h em{font-style:normal;color:var(--ink2);font-size:11px}
+
+.pool{display:flex;gap:6px;flex-wrap:wrap}
+.th{width:52px;height:38px;border-radius:6px;border:1px solid var(--rule);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--ink3);
+  background:transparent;transition:background .3s,color .3s,border-color .3s}
+.th.busy{background:var(--in-bg);color:var(--in);border-color:var(--in)}
+.th.blocked{background:var(--stop-bg);color:var(--stop);border-color:var(--stop)}
+.th.idle{background:transparent;color:var(--ink3);border-color:var(--rule)}
+.th.added{background:var(--warn-bg);color:var(--warn);border-color:var(--warn);border-style:dashed}
+
+.queue{display:flex;gap:3px;flex-wrap:wrap;min-height:26px;align-items:center}
+.rq{width:9px;height:20px;border-radius:2px;background:var(--rule);
+  transition:background .3s}
+.rq.wait{background:var(--warn)}
+.rq.hot{background:var(--stop)}
+.qnote{font-family:var(--mono);font-size:11.5px;color:var(--ink3);opacity:.6}
+
+.meters{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:4px}
+.meter{border:1px solid var(--rule);border-radius:7px;padding:9px 11px}
+.meter-k{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink3);margin:0 0 3px}
+.meter-v{font-family:var(--mono);font-size:19px;color:var(--ink);line-height:1.2;
+  transition:color .3s}
+.meter-v.warn{color:var(--warn)} .meter-v.bad{color:var(--stop)} .meter-v.good{color:var(--in)}
+.meter-s{font-family:var(--mono);font-size:10.5px;color:var(--ink3);margin:2px 0 0}
+
+.log{margin-top:16px;border-top:1px solid var(--rule);padding-top:12px;min-height:104px}
+.log p{margin:0 0 6px;font-size:14px;color:var(--ink2);display:grid;
+  grid-template-columns:86px 1fr;gap:10px;align-items:baseline}
+.log p span:first-child{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink3)}
+.log p b{color:var(--ink);font-weight:500}
+.log p code{font-family:var(--mono);font-size:12.5px}
+.log p.bad{color:var(--stop)} .log p.bad span{color:var(--stop)}
+.log p.warn{color:var(--warn)} .log p.warn span{color:var(--warn)}
+
+.verdict{margin-top:18px;border-top:1px solid var(--rule);padding-top:16px;
+  font-size:15px;color:var(--ink2);min-height:84px}
+.verdict code{font-family:var(--mono);font-size:13px;color:var(--ink);
+  background:var(--paper);padding:1px 5px;border-radius:4px}
+.verdict b{color:var(--ink);font-weight:500}
+.verdict .tag{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  display:block;margin-bottom:7px}
+.t-in{color:var(--in)} .t-warn{color:var(--warn)} .t-stop{color:var(--stop)}
+
+footer{margin-top:44px;padding-top:20px;border-top:1px solid var(--rule);
+  font-size:14px;color:var(--ink3)}
+footer a{color:var(--ink2)}
+
+@media (max-width:760px){
+  .wrap{padding:32px 16px 56px}
+  .layout{grid-template-columns:1fr;gap:20px}
+  .rail{position:static;flex-direction:row;flex-wrap:wrap;gap:6px}
+  .rail-h{display:none}
+  .scn{width:auto;border:1px solid var(--rule);border-radius:6px;padding:7px 12px}
+  .scn[aria-pressed=true]{border-color:var(--in)}
+  .meters{grid-template-columns:1fr}
+  .log p{grid-template-columns:1fr;gap:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Chapter 05 · .NET concepts</p>
+  <h1>Async, threads and memory</h1>
+  <p class="thesis">A pool of four threads, and requests that spend almost all their time <b>waiting on a database</b>. Nothing here is CPU-bound. The only variable is whether a thread is <b>held</b> during the wait or <b>given back</b> — watch the queue.</p>
+
+  <div class="layout">
+    <div class="rail">
+      <p class="rail-h">Trace</p>
+      <button class="scn" id="s-sync"  aria-pressed="false" onclick="run('sync')">Blocking on <code>.Result</code></button>
+      <button class="scn" id="s-grow"  aria-pressed="false" onclick="run('grow')">Why the pool can't save you</button>
+      <button class="scn" id="s-async" aria-pressed="false" onclick="run('async')">The same load, awaited</button>
+      <button class="scn" id="s-cpu"   aria-pressed="false" onclick="run('cpu')">When async doesn't help</button>
+    </div>
+
+    <div class="panel">
+      <p class="band" id="band">Idle · 4 pool threads</p>
+
+      <div class="zone">
+        <p class="zone-h"><span>Thread pool</span><em id="pool-note">4 threads</em></p>
+        <div class="pool" id="pool"></div>
+      </div>
+
+      <div class="zone">
+        <p class="zone-h"><span>Work queue</span><em id="q-note">empty</em></p>
+        <div class="queue" id="queue"><span class="qnote">no queued work</span></div>
+      </div>
+
+      <div class="meters">
+        <div class="meter"><p class="meter-k">In flight</p><p class="meter-v" id="m-flight">0</p><p class="meter-s">requests</p></div>
+        <div class="meter"><p class="meter-k">Queue length</p><p class="meter-v" id="m-queue">0</p><p class="meter-s">ThreadPool counter</p></div>
+        <div class="meter"><p class="meter-k">CPU</p><p class="meter-v" id="m-cpu">0%</p><p class="meter-s">the tell</p></div>
+      </div>
+
+      <div class="log" id="log"></div>
+      <div class="verdict" id="verdict"><span class="tag">Ready</span>Pick a trace. The pair to watch is <b>queue length against CPU</b> — a queue climbing while CPU stays low is the fingerprint of starvation, and it is the one combination that cannot be explained by the work being hard.</div>
+    </div>
+  </div>
+
+  <footer>Chapter 05 of <a href="../README.md">.NET concepts</a> · the written explanation lives in <code>concepts/05-async-threads-and-memory.md</code></footer>
+</div>
+
+<script>
+/* threads: array of 'idle' | 'busy' | 'blocked' | 'added' with a label */
+var S={
+ sync:{
+  tag:'One blocked thread per request', cls:'t-stop',
+  msg:'Every one of these requests is waiting on a database. None of them needs a CPU — and yet each one holds a pool thread for the entire wait, because <code>.Result</code> blocks the caller until the task completes. Four threads, four concurrent requests, and everything else queues. The numbers are the diagnosis: <b>queue climbing while CPU sits near idle</b>. That combination cannot be explained by the work being expensive, because nothing is working. It is the fingerprint of starvation, and the fix is never a bigger pool — it is not blocking in the first place.',
+  steps:[
+   {b:'4 requests arrive',bc:'open',t:'accept',c:'Each handler calls <code>db.Racks.FindAsync(id).Result</code> — a 200 ms database wait.',
+    th:['blocked','blocked','blocked','blocked'],q:0,flight:4,cpu:'3%',cpuk:'good'},
+   {t:'waiting',c:'All four threads are parked on I/O. The database is working; the server is not.',
+    th:['blocked','blocked','blocked','blocked'],q:0,flight:4,cpu:'3%',cpuk:'good'},
+   {b:'12 more arrive',bc:'bad',t:'queue',k:'warn',c:'No thread is free to pick them up. They go to the work queue and wait.',
+    th:['blocked','blocked','blocked','blocked'],q:12,flight:16,cpu:'4%',cpuk:'good'},
+   {t:'queue',k:'bad',c:'Load continues. The queue grows faster than requests complete.',
+    th:['blocked','blocked','blocked','blocked'],q:26,flight:30,cpu:'4%',cpuk:'good'},
+   {b:'Starved',bc:'bad',t:'p99',k:'bad',c:'Latency is now dominated by <b>time spent in the queue</b>, not time spent working. Clients start timing out.',
+    th:['blocked','blocked','blocked','blocked'],q:38,flight:42,cpu:'5%',cpuk:'good'}
+  ]},
+
+ grow:{
+  tag:'Injection is slower than arrival', cls:'t-warn',
+  msg:'The pool does grow — but past its minimum it adds threads on the order of <b>one or two a second</b>, because injection is a hill-climbing heuristic rather than an allocation. That rate is the entire story. If requests arrive faster than the pool can grow, the queue wins, and it keeps winning for as long as the load lasts. This is why "just raise <code>MinThreads</code>" is a tourniquet and not a fix: it buys you a larger constant, while the thing actually generating the queue is that every request consumes a thread it does not need. Each added thread also costs about a megabyte of stack, so the pool is expensive precisely where it is least effective.',
+  steps:[
+   {b:'Starved · pool at minimum',bc:'bad',t:'state',c:'Four threads, all blocked. 38 requests queued.',
+    th:['blocked','blocked','blocked','blocked'],q:38,flight:42,cpu:'5%',cpuk:'good'},
+   {b:'+1 s',bc:'root',t:'inject',k:'warn',c:'The pool notices the queue and adds a thread. It blocks too — the new thread runs the same blocking code.',
+    th:['blocked','blocked','blocked','blocked','added'],q:44,flight:49,cpu:'6%',cpuk:'good'},
+   {b:'+2 s',bc:'root',t:'inject',k:'warn',c:'Another. Arrivals in that second: roughly twenty.',
+    th:['blocked','blocked','blocked','blocked','blocked','added'],q:52,flight:58,cpu:'7%',cpuk:'good'},
+   {b:'+3 s',bc:'bad',t:'inject',k:'bad',c:'Two threads added, thirty requests arrived. The gap widens every second.',
+    th:['blocked','blocked','blocked','blocked','blocked','blocked','added'],q:63,flight:70,cpu:'8%',cpuk:'good'},
+   {b:'Losing',bc:'bad',t:'verdict',k:'bad',c:'Each thread costs ~1 MB of stack, and none of them is doing work. You are buying memory to hold more waiting.',
+    th:['blocked','blocked','blocked','blocked','blocked','blocked','blocked','added'],q:74,flight:82,cpu:'9%',cpuk:'good'}
+  ]},
+
+ async:{
+  tag:'Same four threads, same load', cls:'t-in',
+  msg:'Identical pool, identical arrival rate, identical 200 ms database wait — and the queue stays near zero. At the <code>await</code>, the method registers a continuation and <b>returns its thread to the pool</b>, so the thread is available for the next request while the database is still working. When the I/O completes, the continuation is scheduled onto whichever thread is free, and the method resumes on the line after the await. Note what did <i>not</i> change: no single request got faster. Each one still waits 200 ms. What changed is that a wait no longer costs a thread, so four threads can carry hundreds of in-flight requests instead of four.',
+  steps:[
+   {b:'4 requests arrive',bc:'open',t:'accept',c:'<code>await db.Racks.FindAsync(id, ct)</code> — the same 200 ms wait.',
+    th:['busy','busy','busy','busy'],q:0,flight:4,cpu:'4%',cpuk:'good'},
+   {b:'At the await',bc:'open',t:'release',c:'The I/O is not complete, so each method returns to its caller and registers a continuation. <b>All four threads go back to the pool.</b>',
+    th:['idle','idle','idle','idle'],q:0,flight:4,cpu:'2%',cpuk:'good'},
+   {b:'12 more arrive',bc:'open',t:'accept',c:'Threads are free, so they are picked up immediately — and released again at their own awaits.',
+    th:['idle','idle','busy','idle'],q:0,flight:16,cpu:'5%',cpuk:'good'},
+   {t:'resume',c:'The first database calls complete. Continuations are scheduled onto whatever thread is free — not necessarily the one that started.',
+    th:['busy','idle','busy','idle'],q:1,flight:22,cpu:'11%',cpuk:'good'},
+   {b:'Steady state',bc:'open',t:'steady',c:'Requests in flight: <b>200</b>. Threads: still four. The queue never grew because a wait no longer occupies one.',
+    th:['busy','idle','busy','busy'],q:2,flight:200,cpu:'19%',cpuk:'good'}
+  ]},
+
+ cpu:{
+  tag:'Nothing to give back', cls:'t-warn',
+  msg:'Async releases a thread <b>because there is an external wait to release it during</b>. Hashing, parsing, image resizing and optimisation loops have no such wait — the thread is genuinely working, and there is nothing to hand back. Wrapping this in <code>Task.Run</code> does not create capacity; it moves the work from one pool thread to another and adds a scheduling hop, which on a server is a small loss dressed as a fix. The honest tell is in the meters: CPU is <b>pinned</b>, not idle. A queue with high CPU means the box is saturated and the answers are real ones — do less work, cache the result, or add machines. Only a queue with <i>low</i> CPU is starvation.',
+  steps:[
+   {b:'4 CPU-bound requests',bc:'open',t:'accept',c:'Each one hashes a large payload. No I/O anywhere in the handler.',
+    th:['busy','busy','busy','busy'],q:0,flight:4,cpu:'97%',cpuk:'bad'},
+   {t:'await?',c:'There is no external operation to await. The thread is not waiting — it is computing.',
+    th:['busy','busy','busy','busy'],q:0,flight:4,cpu:'98%',cpuk:'bad'},
+   {b:'12 more arrive',bc:'root',t:'queue',k:'warn',c:'They queue — but for a completely different reason. Every core is already busy doing real work.',
+    th:['busy','busy','busy','busy'],q:12,flight:16,cpu:'99%',cpuk:'bad'},
+   {t:'Task.Run',k:'warn',c:'Offloading to <code>Task.Run</code> moves the work to another pool thread and adds a hop. The same four cores do the same work.',
+    th:['busy','busy','busy','busy'],q:13,flight:16,cpu:'99%',cpuk:'bad'},
+   {b:'Saturated, not starved',bc:'root',t:'verdict',c:'Queue high <b>and</b> CPU high. That is a capacity problem, and async is not the lever — less work, a cache, or more machines is.',
+    th:['busy','busy','busy','busy'],q:14,flight:18,cpu:'99%',cpuk:'bad'}
+  ]}
+};
+
+var band=document.getElementById('band'),log=document.getElementById('log'),
+    poolEl=document.getElementById('pool'),queueEl=document.getElementById('queue'),
+    poolNote=document.getElementById('pool-note'),qNote=document.getElementById('q-note'),
+    mFlight=document.getElementById('m-flight'),mQueue=document.getElementById('m-queue'),
+    mCpu=document.getElementById('m-cpu'),V=document.getElementById('verdict'),timers=[];
+
+var LABEL={idle:'idle',busy:'work',blocked:'BLOCK',added:'new'};
+
+function reset(){
+ timers.forEach(clearTimeout);timers=[];
+ log.innerHTML='';
+ band.className='band';band.textContent='Idle · 4 pool threads';
+ drawPool(['idle','idle','idle','idle']);
+ drawQueue(0);
+ mFlight.textContent='0';mQueue.textContent='0';mQueue.className='meter-v';
+ mCpu.textContent='0%';mCpu.className='meter-v';
+}
+
+function drawPool(th){
+ poolEl.innerHTML=th.map(function(s){
+   return '<span class="th '+s+'">'+LABEL[s]+'</span>';}).join('');
+ poolNote.textContent=th.length+' thread'+(th.length===1?'':'s');
+}
+
+function drawQueue(n){
+ if(n===0){queueEl.innerHTML='<span class="qnote">no queued work</span>';qNote.textContent='empty';return;}
+ var shown=Math.min(n,48),cls=n>30?'hot':(n>6?'wait':'');
+ var s='';for(var i=0;i<shown;i++)s+='<span class="rq '+cls+'"></span>';
+ if(n>shown)s+='<span class="qnote" style="margin-left:6px">+'+(n-shown)+'</span>';
+ queueEl.innerHTML=s;
+ qNote.textContent=n+' waiting';
+}
+
+function run(mode){
+ reset();
+ var s=S[mode];
+ Object.keys(S).forEach(function(m){
+   document.getElementById('s-'+m).setAttribute('aria-pressed',String(m===mode));});
+
+ var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,
+     gap=reduce?0:1250,d=0;
+
+ s.steps.forEach(function(st){
+  timers.push(setTimeout(function(){
+   if(st.b!==undefined){band.className='band'+(st.bc?' '+st.bc:'');band.textContent=st.b;}
+   if(st.th)drawPool(st.th);
+   if(st.q!==undefined){drawQueue(st.q);mQueue.textContent=st.q;
+     mQueue.className='meter-v'+(st.q>30?' bad':(st.q>6?' warn':''));}
+   if(st.flight!==undefined)mFlight.textContent=st.flight;
+   if(st.cpu){mCpu.textContent=st.cpu;mCpu.className='meter-v'+(st.cpuk?' '+st.cpuk:'');}
+   var p=document.createElement('p');
+   if(st.k)p.className=st.k;
+   p.innerHTML='<span>'+st.t+'</span><span>'+st.c+'</span>';
+   log.appendChild(p);
+  },d));
+  d+=gap;
+ });
+
+ timers.push(setTimeout(function(){
+  V.innerHTML='<span class="tag '+s.cls+'">'+s.tag+'</span>'+s.msg;
+ },d));
+}
+
+drawPool(['idle','idle','idle','idle']);
+</script>
+</body>
+</html>

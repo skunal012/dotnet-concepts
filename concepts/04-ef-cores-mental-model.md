@@ -286,4 +286,4 @@ Chapter 05 takes the thread this one kept pulling on — `await`, and what a thr
 
 ## Next
 
-→ `05-async-threads-and-memory.md` — every database call in this chapter was `await`ed, and §4 was a memory argument in disguise. The next chapter is what those two words are really doing.
+→ [`05-async-threads-and-memory.md`](05-async-threads-and-memory.md) — every database call in this chapter was `await`ed, and §4 was a memory argument in disguise. The next chapter is what those two words are really doing.
