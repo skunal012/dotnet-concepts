@@ -298,4 +298,4 @@ Chapter 09 picks up the two things §4 deferred: what happens when the copies mu
 
 ## Next
 
-→ `09-distributed-and-real-time.md` — §4 listed SignalR backplanes and a scheduled job running three times as things that break when there is more than one copy. Those are not deployment problems; they are what happens when processes have to agree.
+→ [`09-distributed-and-real-time.md`](09-distributed-and-real-time.md) — §4 listed SignalR backplanes and a scheduled job running three times as things that break when there is more than one copy. Those are not deployment problems; they are what happens when processes have to agree.
