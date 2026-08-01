@@ -22,7 +22,7 @@ A question can only live in one chapter. Where two chapters both touch it, it's 
 | [06 · Authentication and authorization](#ch06) ✅ | 27, 48, 50, 80, 81, 82, 84 | 7 |
 | [07 · Testing and TDD](#ch07) ✅ | 41, 42, 43, 44, 45 | 5 |
 | [08 · Build and ship](#ch08) ✅ | 13, 46, 47, 49, 51, 52, 54, 55 | 8 |
-| [09 · Distributed and real-time](#ch09) ⬜ | 31, 32, 35, 53, 89 | 5 |
+| [09 · Distributed and real-time](#ch09) ✅ | 31, 32, 35, 53, 89 | 5 |
 | [10 · Platform and history](#ch10) ⬜ | 1, 2, 3, 7, 14, 85, 86, 87, 88, 93, 94, 99, 100 | 13 |
 | [11 · Interop and migration](#ch11) ⬜ | 26, 34, 66, 67, 68, 69, 90, 91, 92 | 9 |
 | [12 · Tooling reference](#ch12) ⬜ | 4, 5, 6, 8, 10, 11, 12, 15, 71, 73, 74 | 11 |
@@ -174,9 +174,9 @@ A question can only live in one chapter. Where two chapters both touch it, it's 
 ---
 
 <a id="ch09"></a>
-## 09 · Distributed and real-time ⬜
+## 09 · Distributed and real-time ✅
 
-**The concept:** once there's more than one process, everything is a contract plus a transport — REST, gRPC, SignalR, and queues are four answers to "who initiates, and what survives a failure".
+**The concept:** once there's more than one process, everything is a contract plus a transport — REST, gRPC, SignalR, and queues are four answers to "who initiates, and what survives a failure". → [`concepts/09-distributed-and-real-time.md`](concepts/09-distributed-and-real-time.md)
 
 | # | Question | Why it's this chapter |
 |---|---|---|

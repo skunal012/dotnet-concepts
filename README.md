@@ -52,7 +52,7 @@ Ordered by dependency, not by difficulty. Auth needs the pipeline. EF Core is ea
 | 06 | Authentication and authorization | [✅](concepts/06-authentication-and-authorization.md) | — | [✅](anki/06-authentication-and-authorization.txt) |
 | 07 | Testing and TDD | [✅](concepts/07-testing-and-tdd.md) | — | [✅](anki/07-testing-and-tdd.txt) |
 | 08 | Build and ship | [✅](concepts/08-build-and-ship.md) | — | [✅](anki/08-build-and-ship.txt) |
-| 09 | Distributed and real-time | ⬜ | ⬜ | ⬜ |
+| 09 | Distributed and real-time | [✅](concepts/09-distributed-and-real-time.md) | [✅](widgets/09-distributed-and-real-time.html) | [✅](anki/09-distributed-and-real-time.txt) |
 | 10 | Platform and history | ⬜ | — | ⬜ |
 | 11 | Interop and migration | ⬜ | — | ⬜ |
 | 12 | Tooling reference | ⬜ | — | ⬜ |

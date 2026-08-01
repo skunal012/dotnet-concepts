@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Distributed and real-time — .NET concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F3F5F6; --card:#FFFFFF; --ink:#12181F; --ink2:#55606B; --ink3:#8A949E;
+  --rule:#DFE4E7;
+  --in:#0F6E6A; --in-bg:#DEEFED;
+  --out:#3A4C9E; --out-bg:#E4E8F7;
+  --warn:#96650A; --warn-bg:#F8EEDA;
+  --stop:#9C3330; --stop-bg:#F9E7E6;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#0E1216; --card:#161B21; --ink:#E6EAED; --ink2:#9AA5AF; --ink3:#6B7681;
+    --rule:#262E36;
+    --in:#5DCAA5; --in-bg:#10312B;
+    --out:#93A6EE; --out-bg:#1A2140;
+    --warn:#E0A73E; --warn-bg:#3A2B0C;
+    --stop:#E58380; --stop-bg:#3A1D1C;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:48px 24px 72px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink3);margin:0 0 14px}
+h1{font-family:var(--mono);font-size:30px;font-weight:500;letter-spacing:-.01em;margin:0 0 14px;line-height:1.2}
+.thesis{font-size:18px;color:var(--ink2);margin:0 0 40px;max-width:62ch}
+.thesis b{color:var(--ink);font-weight:500}
+
+.layout{display:grid;grid-template-columns:196px 1fr;gap:28px;align-items:start}
+.rail{display:flex;flex-direction:column;gap:2px;position:sticky;top:24px}
+.rail-h{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink3);padding:0 0 10px 12px}
+.scn{font-family:var(--sans);font-size:14px;text-align:left;background:none;border:0;
+  border-left:2px solid transparent;color:var(--ink2);padding:9px 12px;cursor:pointer;
+  border-radius:0 6px 6px 0;transition:background .15s,color .15s,border-color .15s;width:100%}
+.scn:hover{background:var(--card);color:var(--ink)}
+.scn[aria-pressed=true]{background:var(--card);color:var(--ink);border-left-color:var(--in);font-weight:500}
+.scn:focus-visible{outline:2px solid var(--in);outline-offset:-2px}
+
+.panel{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:20px}
+.band{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);border:1px dashed var(--rule);border-radius:6px;padding:7px 11px;
+  margin:0 0 16px;transition:border-color .25s,color .25s,background .25s}
+.band.open{border-style:solid;border-color:var(--in);color:var(--in);background:var(--in-bg)}
+.band.root{border-style:solid;border-color:var(--out);color:var(--out);background:var(--out-bg)}
+.band.bad{border-style:solid;border-color:var(--stop);color:var(--stop);background:var(--stop-bg)}
+
+.grid-h{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);display:grid;grid-template-columns:82px 1fr 132px;gap:12px;
+  padding:0 2px 8px;border-bottom:1px solid var(--rule)}
+.lanes{display:flex;flex-direction:column}
+.lane{display:grid;grid-template-columns:82px 1fr 132px;gap:12px;align-items:center;
+  padding:12px 2px;border-bottom:1px solid var(--rule)}
+.lane:last-child{border-bottom:0}
+.lane-n{font-family:var(--mono);font-size:12.5px;color:var(--ink)}
+.lane-n em{display:block;font-style:normal;font-size:10px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink3);margin-top:1px}
+
+.wire{display:flex;align-items:center;gap:5px;min-height:30px;flex-wrap:wrap}
+.node{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;padding:4px 8px;
+  border-radius:5px;border:1px solid var(--rule);color:var(--ink3);white-space:nowrap;
+  transition:background .3s,color .3s,border-color .3s,opacity .3s}
+.node.live{background:var(--in-bg);color:var(--in);border-color:var(--in)}
+.node.dead{background:var(--stop-bg);color:var(--stop);border-color:var(--stop);text-decoration:line-through}
+.node.hold{background:var(--out-bg);color:var(--out);border-color:var(--out)}
+.node.wait{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
+.arr{font-family:var(--mono);font-size:12px;color:var(--ink3);transition:color .3s}
+.arr.go{color:var(--in)} .arr.no{color:var(--stop)} .arr.hold{color:var(--out)}
+.msg{font-family:var(--mono);font-size:10.5px;padding:3px 7px;border-radius:4px;
+  border:1px solid var(--rule);color:var(--ink2);transition:opacity .3s,background .3s,color .3s,border-color .3s}
+.msg.fly{background:var(--in-bg);color:var(--in);border-color:var(--in)}
+.msg.lost{opacity:.3;text-decoration:line-through;color:var(--ink3)}
+.msg.kept{background:var(--out-bg);color:var(--out);border-color:var(--out)}
+.msg.dup{background:var(--stop-bg);color:var(--stop);border-color:var(--stop)}
+
+.res{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;padding:4px 8px;
+  border-radius:5px;border:1px solid var(--rule);color:var(--ink3);justify-self:start;
+  transition:background .3s,color .3s,border-color .3s}
+.res.ok{background:var(--in-bg);color:var(--in);border-color:var(--in)}
+.res.lost{background:var(--stop-bg);color:var(--stop);border-color:var(--stop)}
+.res.held{background:var(--out-bg);color:var(--out);border-color:var(--out)}
+.res.risk{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
+
+.log{margin-top:16px;border-top:1px solid var(--rule);padding-top:12px;min-height:96px}
+.log p{margin:0 0 6px;font-size:14px;color:var(--ink2);display:grid;
+  grid-template-columns:86px 1fr;gap:10px;align-items:baseline}
+.log p span:first-child{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink3)}
+.log p b{color:var(--ink);font-weight:500}
+.log p code{font-family:var(--mono);font-size:12.5px}
+.log p.bad{color:var(--stop)} .log p.bad span{color:var(--stop)}
+.log p.warn{color:var(--warn)} .log p.warn span{color:var(--warn)}
+
+.verdict{margin-top:18px;border-top:1px solid var(--rule);padding-top:16px;
+  font-size:15px;color:var(--ink2);min-height:84px}
+.verdict code{font-family:var(--mono);font-size:13px;color:var(--ink);
+  background:var(--paper);padding:1px 5px;border-radius:4px}
+.verdict b{color:var(--ink);font-weight:500}
+.verdict .tag{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  display:block;margin-bottom:7px}
+.t-in{color:var(--in)} .t-warn{color:var(--warn)} .t-stop{color:var(--stop)} .t-out{color:var(--out)}
+
+footer{margin-top:44px;padding-top:20px;border-top:1px solid var(--rule);
+  font-size:14px;color:var(--ink3)}
+footer a{color:var(--ink2)}
+
+@media (max-width:760px){
+  .wrap{padding:32px 16px 56px}
+  .layout{grid-template-columns:1fr;gap:20px}
+  .rail{position:static;flex-direction:row;flex-wrap:wrap;gap:6px}
+  .rail-h{display:none}
+  .scn{width:auto;border:1px solid var(--rule);border-radius:6px;padding:7px 12px}
+  .scn[aria-pressed=true]{border-color:var(--in)}
+  .grid-h{display:none}
+  .lane{grid-template-columns:1fr;gap:7px}
+  .log p{grid-template-columns:1fr;gap:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Chapter 09 · .NET concepts</p>
+  <h1>Distributed and real-time</h1>
+  <p class="thesis">The same message, over four transports. Two questions decide everything: <b>who initiates</b>, and <b>what survives a failure</b>. Only one of these four rows can answer the second one with "the message does".</p>
+
+  <div class="layout">
+    <div class="rail">
+      <p class="rail-h">Trace</p>
+      <button class="scn" id="s-happy"  aria-pressed="false" onclick="run('happy')">Everything up</button>
+      <button class="scn" id="s-crash"  aria-pressed="false" onclick="run('crash')">Server dies mid-flight</button>
+      <button class="scn" id="s-back"   aria-pressed="false" onclick="run('back')">Consumer comes back</button>
+      <button class="scn" id="s-retry"  aria-pressed="false" onclick="run('retry')">Retry after a timeout</button>
+    </div>
+
+    <div class="panel">
+      <p class="band" id="band">Idle</p>
+
+      <div class="grid-h"><span>Transport</span><span>Path</span><span>Outcome</span></div>
+      <div class="lanes" id="lanes"></div>
+
+      <div class="log" id="log"></div>
+      <div class="verdict" id="verdict"><span class="tag">Ready</span>Pick a trace. Watch the <b>queue</b> row specifically — it is the only one where a broker sits between the two parties, and that single structural difference is what lets a message outlive the process that was supposed to receive it.</div>
+    </div>
+  </div>
+
+  <footer>Chapter 09 of <a href="../README.md">.NET concepts</a> · the written explanation lives in <code>concepts/09-distributed-and-real-time.md</code></footer>
+</div>
+
+<script>
+/* lane: {n, sub, wire:[{t:'node'|'arr'|'msg', k:class, v:label}], res, rk} */
+var LANES=['rest','grpc','sig','q'];
+var META={rest:{n:'REST',sub:'client pulls'},grpc:{n:'gRPC',sub:'client pulls'},
+          sig:{n:'SignalR',sub:'server pushes'},q:{n:'Queue',sub:'broker holds'}};
+
+function W(){ return Array.prototype.slice.call(arguments); }
+function node(k,v){return {t:'node',k:k,v:v};}
+function arr(k,v){return {t:'arr',k:k,v:v||'→'};}
+function msg(k,v){return {t:'msg',k:k,v:v};}
+
+var S={
+ happy:{
+  tag:'All four deliver', cls:'t-in',
+  msg:'With both parties alive, every transport works and the differences look cosmetic — which is exactly why the choice gets made on syntax rather than on failure behaviour. Note who starts each arrow: REST and gRPC begin at the client, SignalR begins at the <b>server</b> (that is the entire reason it exists — HTTP has no way for a server to speak first), and the queue begins nowhere in particular because the two ends never meet. That last property costs nothing here and is worth everything in the next trace.',
+  steps:[
+   {b:'Both sides alive',bc:'open',t:'send',c:'The same logical message — "placement job 41 finished" — over all four.',
+    lanes:{
+     rest:{wire:W(node('live','client'),arr('go'),msg('fly','GET'),arr('go'),node('live','server')),res:'200 OK',rk:'ok'},
+     grpc:{wire:W(node('live','client'),arr('go'),msg('fly','unary'),arr('go'),node('live','server')),res:'OK',rk:'ok'},
+     sig:{wire:W(node('live','server'),arr('go'),msg('fly','push'),arr('go'),node('live','client')),res:'delivered',rk:'ok'},
+     q:{wire:W(node('live','producer'),arr('go'),node('hold','broker'),arr('go'),node('live','consumer')),res:'processed',rk:'ok'}}},
+   {t:'result',c:'All four arrive. At this point the only visible differences are payload format and who typed the contract.'}
+  ]},
+
+ crash:{
+  tag:'Only the broker holds it', cls:'t-stop',
+  msg:'The receiver dies while the message is in flight. Three transports lose it, and they lose it in slightly different costumes — a 502, an <code>UNAVAILABLE</code> status, a silently dropped push. In every case <b>the only copy was in transit</b>, and responsibility for not losing it falls back on the caller, who must notice and retry. The queue row differs structurally rather than in degree: the broker already has the message and has not received an acknowledgement, so it simply keeps it. That is the whole of "what survives a failure", and it is not a feature you can add to the other three — it requires a third party that outlives both.',
+  steps:[
+   {b:'Message in flight',bc:'open',t:'send',c:'All four dispatched, nothing acknowledged yet.',
+    lanes:{
+     rest:{wire:W(node('live','client'),arr('go'),msg('fly','GET'),arr('go'),node('live','server')),res:'in flight',rk:''},
+     grpc:{wire:W(node('live','client'),arr('go'),msg('fly','unary'),arr('go'),node('live','server')),res:'in flight',rk:''},
+     sig:{wire:W(node('live','server'),arr('go'),msg('fly','push'),arr('go'),node('live','client')),res:'in flight',rk:''},
+     q:{wire:W(node('live','producer'),arr('go'),node('hold','broker'),arr('go'),node('live','consumer')),res:'in flight',rk:''}}},
+   {b:'Receiver dies',bc:'bad',t:'crash',k:'bad',c:'The pod is killed mid-request. No graceful shutdown, no response written.',
+    lanes:{
+     rest:{wire:W(node('live','client'),arr('no'),msg('lost','GET'),arr('no'),node('dead','server')),res:'502 — lost',rk:'lost'},
+     grpc:{wire:W(node('live','client'),arr('no'),msg('lost','unary'),arr('no'),node('dead','server')),res:'UNAVAILABLE',rk:'lost'},
+     sig:{wire:W(node('dead','server'),arr('no'),msg('lost','push'),arr('no'),node('live','client')),res:'dropped',rk:'lost'},
+     q:{wire:W(node('live','producer'),arr('go'),node('hold','broker'),arr('no'),node('dead','consumer')),res:'held by broker',rk:'held'}}},
+   {t:'who has it',k:'warn',c:'Three transports: the only copy was in transit, and it is gone. The caller must notice and resend.'},
+   {b:'Broker still holds it',bc:'root',t:'queue',c:'The broker delivered but was never acknowledged — so it keeps the message. Nothing was lost, only delayed.',
+    lanes:{q:{wire:W(node('live','producer'),arr('go'),node('hold','broker · 1 unacked'),arr('no'),node('dead','consumer')),res:'held by broker',rk:'held'}}}
+  ]},
+
+ back:{
+  tag:'Latency, not lost work', cls:'t-out',
+  msg:'The consumer restarts and the broker redelivers. The outage became <b>latency</b> rather than lost work, and nothing upstream had to know it happened — the producer completed successfully at the moment it wrote to the broker. This is decoupling in time, and it is why a queue is the right answer whenever the work must not be lost: deploys, restarts and crashes stop being incidents. Note also what it does to scaling — ten consumers reading one queue split the work with each message going to exactly one of them, which is the clean fix for chapter 08\'s scheduled job that ran once per replica.',
+  steps:[
+   {b:'Consumer offline',bc:'bad',t:'state',c:'Three transports have already lost their message. The broker is holding one.',
+    lanes:{
+     rest:{wire:W(node('live','client'),arr('no'),msg('lost','GET'),arr('no'),node('dead','server')),res:'gone',rk:'lost'},
+     grpc:{wire:W(node('live','client'),arr('no'),msg('lost','unary'),arr('no'),node('dead','server')),res:'gone',rk:'lost'},
+     sig:{wire:W(node('dead','server'),arr('no'),msg('lost','push'),arr('no'),node('live','client')),res:'gone',rk:'lost'},
+     q:{wire:W(node('live','producer'),arr('go'),node('hold','broker · 1 unacked'),arr('no'),node('dead','consumer')),res:'held',rk:'held'}}},
+   {b:'Consumer restarts',bc:'open',t:'restart',c:'A new instance starts and subscribes. The other three transports have nothing to resume — there is no record of the attempt.',
+    lanes:{q:{wire:W(node('live','producer'),arr('go'),node('hold','broker · 1 unacked'),arr('hold'),node('wait','consumer · booting')),res:'redelivering',rk:'risk'}}},
+   {b:'Redelivered and acknowledged',bc:'open',t:'ack',c:'The broker redelivers, the handler succeeds, the message is acknowledged and removed.',
+    lanes:{q:{wire:W(node('live','producer'),arr('go'),node('hold','broker · 0'),arr('go'),node('live','consumer')),res:'processed',rk:'ok'}}},
+   {t:'cost',k:'warn',c:'The price of that guarantee is the next trace: redelivery means <b>your handler will see duplicates</b>.'}
+  ]},
+
+ retry:{
+  tag:'A timeout is not a failure', cls:'t-warn',
+  msg:'The call timed out — and a timeout is a <b>third outcome</b>, neither success nor failure. The request may never have arrived, or it may have executed completely and the response was lost coming back. From the caller\'s side those are indistinguishable; the information does not exist where you are standing. So a blind retry runs the work twice, which for a read is free and for "charge this card" is a support ticket. The queue row shows the same problem arriving structurally: at-least-once delivery is the only honest choice a broker can make, so duplicates are guaranteed rather than possible. Both are fixed the same way — an <b>idempotency key</b>. The receiver records what it has already processed and returns the first outcome instead of repeating the work. Retries become safe because you made them safe, not because the network improved.',
+  steps:[
+   {b:'Call times out',bc:'bad',t:'timeout',k:'warn',c:'No response within the deadline. <b>You do not know whether the work happened.</b>',
+    lanes:{
+     rest:{wire:W(node('live','client'),arr('go'),msg('fly','POST'),arr('no'),node('wait','server · ???')),res:'unknown',rk:'risk'},
+     grpc:{wire:W(node('live','client'),arr('go'),msg('fly','unary'),arr('no'),node('wait','server · ???')),res:'DEADLINE_EXC',rk:'risk'},
+     sig:{wire:W(node('live','server'),arr('go'),msg('lost','push'),arr('no'),node('live','client')),res:'no ack',rk:'risk'},
+     q:{wire:W(node('live','producer'),arr('go'),node('hold','broker · unacked'),arr('go'),node('live','consumer · ran?')),res:'unknown',rk:'risk'}}},
+   {b:'Blind retry',bc:'bad',t:'retry',k:'bad',c:'The caller resends. The first call had in fact succeeded — the response was lost on the way back.',
+    lanes:{
+     rest:{wire:W(node('live','client'),arr('go'),msg('dup','POST ×2'),arr('go'),node('live','server')),res:'charged twice',rk:'lost'},
+     grpc:{wire:W(node('live','client'),arr('go'),msg('dup','unary ×2'),arr('go'),node('live','server')),res:'ran twice',rk:'lost'},
+     q:{wire:W(node('live','producer'),arr('go'),node('hold','broker'),arr('go'),msg('dup','redelivered')),res:'handled twice',rk:'lost'}}},
+   {b:'With an idempotency key',bc:'open',t:'fix',c:'The caller sends a key; the receiver records it and returns the <b>first</b> result instead of repeating the work.',
+    lanes:{
+     rest:{wire:W(node('live','client'),arr('go'),msg('kept','POST + key'),arr('go'),node('live','server')),res:'once',rk:'ok'},
+     grpc:{wire:W(node('live','client'),arr('go'),msg('kept','unary + key'),arr('go'),node('live','server')),res:'once',rk:'ok'},
+     sig:{wire:W(node('live','server'),arr('go'),msg('kept','push + seq'),arr('go'),node('live','client')),res:'deduped',rk:'ok'},
+     q:{wire:W(node('live','producer'),arr('go'),node('hold','broker'),arr('go'),node('live','consumer · dedup')),res:'exactly once',rk:'ok'}}}
+  ]}
+};
+
+var band=document.getElementById('band'),log=document.getElementById('log'),
+    lanesEl=document.getElementById('lanes'),V=document.getElementById('verdict'),timers=[];
+
+function blank(){
+ lanesEl.innerHTML=LANES.map(function(k){
+  return '<div class="lane" id="ln-'+k+'">'+
+   '<span class="lane-n">'+META[k].n+'<em>'+META[k].sub+'</em></span>'+
+   '<span class="wire" id="wr-'+k+'"></span>'+
+   '<span class="res" id="rs-'+k+'">—</span></div>';}).join('');
+}
+
+function reset(){
+ timers.forEach(clearTimeout);timers=[];
+ log.innerHTML='';
+ band.className='band';band.textContent='Idle';
+ blank();
+}
+
+function paint(k,d){
+ var w=document.getElementById('wr-'+k),r=document.getElementById('rs-'+k);
+ if(!w)return;
+ if(d.wire)w.innerHTML=d.wire.map(function(p){
+   if(p.t==='arr')return '<span class="arr '+(p.k||'')+'">'+p.v+'</span>';
+   if(p.t==='msg')return '<span class="msg '+(p.k||'')+'">'+p.v+'</span>';
+   return '<span class="node '+(p.k||'')+'">'+p.v+'</span>';}).join('');
+ if(d.res!==undefined){r.textContent=d.res;r.className='res'+(d.rk?' '+d.rk:'');}
+}
+
+function run(mode){
+ reset();
+ var s=S[mode];
+ Object.keys(S).forEach(function(m){
+   document.getElementById('s-'+m).setAttribute('aria-pressed',String(m===mode));});
+
+ var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,
+     gap=reduce?0:1500,d=0;
+
+ s.steps.forEach(function(st){
+  timers.push(setTimeout(function(){
+   if(st.b!==undefined){band.className='band'+(st.bc?' '+st.bc:'');band.textContent=st.b;}
+   if(st.lanes)Object.keys(st.lanes).forEach(function(k){paint(k,st.lanes[k]);});
+   var p=document.createElement('p');
+   if(st.k)p.className=st.k;
+   p.innerHTML='<span>'+st.t+'</span><span>'+st.c+'</span>';
+   log.appendChild(p);
+  },d));
+  d+=gap;
+ });
+
+ timers.push(setTimeout(function(){
+  V.innerHTML='<span class="tag '+s.cls+'">'+s.tag+'</span>'+s.msg;
+ },d));
+}
+
+blank();
+</script>
+</body>
+</html>

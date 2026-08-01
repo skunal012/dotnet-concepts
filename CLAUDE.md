@@ -34,6 +34,7 @@ anki/               — tab-separated Anki import files
 - Chapter 06: authentication and authorization (concepts/ + anki/, no widget by design)
 - Chapter 07: testing and TDD (concepts/ + anki/, no widget by design)
 - Chapter 08: build and ship (concepts/ + anki/, no widget by design)
+- Chapter 09: distributed and real-time (concepts/ + widgets/ + anki/)
 - QUESTIONS.md: all 100 questions assigned, verified no gaps or duplicates
 
 ## Chapter roadmap (dependency-ordered)
@@ -48,8 +49,8 @@ anki/               — tab-separated Anki import files
 | 06 | Authentication and authorization | ✅     | no              |
 | 07 | Testing and TDD                  | ✅     | no              |
 | 08 | Build and ship                   | ✅     | no              |
-| 09 | Distributed and real-time        | next   | yes             |
-| 10 | Platform and history             | ⬜     | no              |
+| 09 | Distributed and real-time        | ✅     | ✅ done         |
+| 10 | Platform and history             | next   | no              |
 | 11 | Interop and migration            | ⬜     | no              |
 | 12 | Tooling reference                | ⬜     | no              |
 
