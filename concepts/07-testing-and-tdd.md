@@ -278,4 +278,4 @@ Chapter 08 takes the suite from §9 and asks what runs it, and what happens afte
 
 ## Next
 
-→ `08-build-and-ship.md` — §9 argued that a suite nothing enforces is decoration. The next chapter is the machinery that enforces it, and everything that happens between a green build and a running process.
+→ [`08-build-and-ship.md`](08-build-and-ship.md) — §9 argued that a suite nothing enforces is decoration. The next chapter is the machinery that enforces it, and everything that happens between a green build and a running process.

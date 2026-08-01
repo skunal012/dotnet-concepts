@@ -51,7 +51,7 @@ Ordered by dependency, not by difficulty. Auth needs the pipeline. EF Core is ea
 | 05 | Async, threads and memory | [✅](concepts/05-async-threads-and-memory.md) | [✅](widgets/05-async-threads-and-memory.html) | [✅](anki/05-async-threads-and-memory.txt) |
 | 06 | Authentication and authorization | [✅](concepts/06-authentication-and-authorization.md) | — | [✅](anki/06-authentication-and-authorization.txt) |
 | 07 | Testing and TDD | [✅](concepts/07-testing-and-tdd.md) | — | [✅](anki/07-testing-and-tdd.txt) |
-| 08 | Build and ship | ⬜ | — | ⬜ |
+| 08 | Build and ship | [✅](concepts/08-build-and-ship.md) | — | [✅](anki/08-build-and-ship.txt) |
 | 09 | Distributed and real-time | ⬜ | ⬜ | ⬜ |
 | 10 | Platform and history | ⬜ | — | ⬜ |
 | 11 | Interop and migration | ⬜ | — | ⬜ |
