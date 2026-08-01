@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DI and service lifetimes — .NET concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F3F5F6; --card:#FFFFFF; --ink:#12181F; --ink2:#55606B; --ink3:#8A949E;
+  --rule:#DFE4E7;
+  --in:#0F6E6A; --in-bg:#DEEFED;
+  --out:#3A4C9E; --out-bg:#E4E8F7;
+  --warn:#96650A; --warn-bg:#F8EEDA;
+  --stop:#9C3330; --stop-bg:#F9E7E6;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#0E1216; --card:#161B21; --ink:#E6EAED; --ink2:#9AA5AF; --ink3:#6B7681;
+    --rule:#262E36;
+    --in:#5DCAA5; --in-bg:#10312B;
+    --out:#93A6EE; --out-bg:#1A2140;
+    --warn:#E0A73E; --warn-bg:#3A2B0C;
+    --stop:#E58380; --stop-bg:#3A1D1C;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:48px 24px 72px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink3);margin:0 0 14px}
+h1{font-family:var(--mono);font-size:30px;font-weight:500;letter-spacing:-.01em;margin:0 0 14px;line-height:1.2}
+.thesis{font-size:18px;color:var(--ink2);margin:0 0 40px;max-width:62ch}
+.thesis b{color:var(--ink);font-weight:500}
+
+.layout{display:grid;grid-template-columns:196px 1fr;gap:28px;align-items:start}
+.rail{display:flex;flex-direction:column;gap:2px;position:sticky;top:24px}
+.rail-h{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink3);padding:0 0 10px 12px}
+.scn{font-family:var(--sans);font-size:14px;text-align:left;background:none;border:0;
+  border-left:2px solid transparent;color:var(--ink2);padding:9px 12px;cursor:pointer;
+  border-radius:0 6px 6px 0;transition:background .15s,color .15s,border-color .15s;width:100%}
+.scn:hover{background:var(--card);color:var(--ink)}
+.scn[aria-pressed=true]{background:var(--card);color:var(--ink);border-left-color:var(--in);font-weight:500}
+.scn:focus-visible{outline:2px solid var(--in);outline-offset:-2px}
+
+.panel{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:20px}
+.band{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);border:1px dashed var(--rule);border-radius:6px;padding:7px 11px;
+  margin:0 0 14px;transition:border-color .25s,color .25s,background .25s}
+.band.open{border-style:solid;border-color:var(--in);color:var(--in);background:var(--in-bg)}
+.band.root{border-style:solid;border-color:var(--out);color:var(--out);background:var(--out-bg)}
+.band.bad{border-style:solid;border-color:var(--stop);color:var(--stop);background:var(--stop-bg)}
+
+.lanes{display:flex;flex-direction:column;gap:3px}
+.lane{display:grid;grid-template-columns:104px 1fr;gap:12px;align-items:center;
+  padding:9px 0;border-top:1px solid var(--rule)}
+.lane-n{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
+.slots{display:flex;flex-wrap:wrap;gap:5px;min-height:30px;align-items:center}
+.hint{font-family:var(--mono);font-size:11.5px;color:var(--ink3);opacity:.6}
+.chip{font-family:var(--mono);font-size:11.5px;padding:4px 9px;border-radius:5px;
+  border:1px solid var(--rule);color:var(--ink2);background:transparent;
+  transition:background .25s,color .25s,border-color .25s,opacity .25s}
+.chip.new{background:var(--in-bg);color:var(--in);border-color:var(--in)}
+.chip.same{background:transparent;color:var(--in);border-color:var(--in)}
+.chip.gone{opacity:.4;color:var(--ink3);border-color:var(--rule);background:transparent;text-decoration:line-through}
+.chip.leak{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
+.chip.bad{background:var(--stop-bg);color:var(--stop);border-color:var(--stop)}
+
+.log{margin-top:16px;border-top:1px solid var(--rule);padding-top:12px;min-height:118px}
+.log p{margin:0 0 6px;font-size:14px;color:var(--ink2);display:grid;
+  grid-template-columns:86px 1fr;gap:10px;align-items:baseline}
+.log p span:first-child{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink3)}
+.log p b{color:var(--ink);font-weight:500}
+.log p code{font-family:var(--mono);font-size:12.5px}
+.log p.bad{color:var(--stop)} .log p.bad span{color:var(--stop)}
+.log p.warn{color:var(--warn)} .log p.warn span{color:var(--warn)}
+
+.verdict{margin-top:18px;border-top:1px solid var(--rule);padding-top:16px;
+  font-size:15px;color:var(--ink2);min-height:84px}
+.verdict code{font-family:var(--mono);font-size:13px;color:var(--ink);
+  background:var(--paper);padding:1px 5px;border-radius:4px}
+.verdict b{color:var(--ink);font-weight:500}
+.verdict .tag{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  display:block;margin-bottom:7px}
+.t-in{color:var(--in)} .t-warn{color:var(--warn)} .t-stop{color:var(--stop)}
+
+footer{margin-top:44px;padding-top:20px;border-top:1px solid var(--rule);
+  font-size:14px;color:var(--ink3)}
+footer a{color:var(--ink2)}
+
+@media (max-width:760px){
+  .wrap{padding:32px 16px 56px}
+  .layout{grid-template-columns:1fr;gap:20px}
+  .rail{position:static;flex-direction:row;flex-wrap:wrap;gap:6px}
+  .rail-h{display:none}
+  .scn{width:auto;border:1px solid var(--rule);border-radius:6px;padding:7px 12px}
+  .scn[aria-pressed=true]{border-color:var(--in)}
+  .lane{grid-template-columns:1fr;gap:6px}
+  .log p{grid-template-columns:1fr;gap:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Chapter 03 · .NET concepts</p>
+  <h1>DI and service lifetimes</h1>
+  <p class="thesis">A lifetime is not "how long it lives" — it is <b>which container caches the instance</b>. Transient caches nowhere, scoped caches in the scope, singleton caches in the root provider. Count the boxes and every rule follows.</p>
+
+  <div class="layout">
+    <div class="rail">
+      <p class="rail-h">Trace</p>
+      <button class="scn" id="s-two"     aria-pressed="false" onclick="run('two')">Two requests</button>
+      <button class="scn" id="s-captive" aria-pressed="false" onclick="run('captive')">Singleton needs a DbContext</button>
+      <button class="scn" id="s-worker"  aria-pressed="false" onclick="run('worker')">Background worker</button>
+      <button class="scn" id="s-leak"    aria-pressed="false" onclick="run('leak')">Transient <code>IDisposable</code></button>
+    </div>
+
+    <div class="panel">
+      <p class="band" id="band">No scope open</p>
+      <div class="lanes">
+        <div class="lane"><span class="lane-n">Transient</span><span class="slots" id="l-tr"><span class="hint">cached nowhere</span></span></div>
+        <div class="lane"><span class="lane-n">Scoped</span><span class="slots" id="l-sc"><span class="hint">cached in the scope</span></span></div>
+        <div class="lane"><span class="lane-n">Singleton</span><span class="slots" id="l-sg"><span class="hint">cached in the root provider</span></span></div>
+      </div>
+      <div class="log" id="log"></div>
+      <div class="verdict" id="verdict"><span class="tag">Ready</span>Pick a trace. Watch how many instances each lane ends up holding — that count <i>is</i> the lifetime.</div>
+    </div>
+  </div>
+
+  <footer>Chapter 03 of <a href="../README.md">.NET concepts</a> · the written explanation lives in <code>concepts/03-di-and-service-lifetimes.md</code></footer>
+</div>
+
+<script>
+/* op: {l:lane, id:chip id, n:label, s:state}  state = new|same|gone|leak|bad */
+var S={
+ two:{
+  tag:'Three, two, one', cls:'t-in',
+  msg:'Same object graph, resolved twice. The transient lane ends with <b>three</b> instances, the scoped lane with <b>two</b>, the singleton lane with <b>one</b> — and that is the entire definition, made countable. Note what happens <i>within</i> request A: the optimizer and the repository both ask for the context and get the same object, because the scope is the cache. And note what the singleton does at the end of scope A: nothing. It is not disposed, because the root provider has not ended — which is exactly why every field it owns is shared across both requests, and across threads.',
+  steps:[
+   {b:'Scope A · request 1',bc:'open',t:'scope A',c:'Request arrives. The hosting layer opens a scope — this is a convention of the host, not part of what "scoped" means.'},
+   {t:'resolve',c:'Controller constructor asks for <code>IRackOptimizer</code>, <code>GrosDbContext</code>, <code>IMetricCache</code>.',
+    ops:[{l:'tr',id:1,n:'Optimizer #1',s:'new'},{l:'sc',id:1,n:'DbContext #1',s:'new'},{l:'sg',id:1,n:'MetricCache #1',s:'new'}]},
+   {t:'resolve',c:'The optimizer\'s own dependencies resolve: a scorer, plus the context and cache again.',
+    ops:[{l:'tr',id:2,n:'Scorer #2',s:'new'},{l:'sc',id:1,n:'DbContext #1',s:'same'},{l:'sg',id:1,n:'MetricCache #1',s:'same'}]},
+   {b:'Scope A closed',bc:'',t:'dispose',c:'Response written. The scope disposes everything <b>it</b> created — including the transients, which were tracked by it all along.',
+    ops:[{l:'sc',id:1,s:'gone'},{l:'tr',id:1,s:'gone'},{l:'tr',id:2,s:'gone'}]},
+   {b:'Scope B · request 2',bc:'open',t:'scope B',c:'A second request. A second scope.'},
+   {t:'resolve',c:'Identical graph. New transient, new scoped instance — and the <b>same</b> singleton, never rebuilt.',
+    ops:[{l:'tr',id:3,n:'Optimizer #3',s:'new'},{l:'sc',id:2,n:'DbContext #2',s:'new'},{l:'sg',id:1,n:'MetricCache #1',s:'same'}]},
+   {b:'Scope B closed',bc:'',t:'dispose',c:'Scope B ends. The singleton lane is untouched again.',
+    ops:[{l:'sc',id:2,s:'gone'},{l:'tr',id:3,s:'gone'}]}
+  ]},
+
+ captive:{
+  tag:'Captive dependency', cls:'t-stop',
+  msg:'A singleton is constructed <b>once</b>, so whatever it received in that constructor it holds for the life of the process. Injecting a scoped service does not shorten the singleton — it promotes the dependency. In Development the container refuses at startup, because <code>ValidateOnBuild</code> and <code>ValidateScopes</code> default to on there. In Production they default to off, the same code starts cleanly, and the captured context is disposed at the end of request A while the singleton keeps using it. The fix is never to widen the <code>DbContext</code> lifetime — it is <code>IServiceScopeFactory</code>, one scope per unit of work.',
+  steps:[
+   {b:'Development · validation on',bc:'root',t:'startup',c:'<code>ValidateOnBuild</code> walks every descriptor before the first request.'},
+   {b:'Development · validation on',bc:'bad',t:'throws',k:'bad',c:'<b>Cannot consume scoped service \'GrosDbContext\' from singleton \'IMetricCache\'.</b> The app never starts.'},
+   {b:'Production · validation off',bc:'root',t:'same code',c:'Now with <code>ASPNETCORE_ENVIRONMENT=Production</code>. Nothing validates. Startup is clean.'},
+   {b:'Scope A · request 1',bc:'open',t:'scope A',c:'First request builds the singleton, which captures the request-A context.',
+    ops:[{l:'sg',id:1,n:'MetricCache #1',s:'new'},{l:'sc',id:1,n:'DbContext #1',s:'leak'}]},
+   {b:'Scope A closed',bc:'',t:'dispose',k:'warn',c:'The scope disposes the context — but the singleton is still holding the reference.',
+    ops:[{l:'sc',id:1,n:'DbContext #1',s:'gone'}]},
+   {b:'Scope B · request 2',bc:'bad',t:'boom',k:'bad',c:'The singleton reuses what it captured. <b>ObjectDisposedException</b> — or, under concurrent load, <code>A second operation was started on this context</code>.',
+    ops:[{l:'sg',id:1,n:'MetricCache #1',s:'same'},{l:'sc',id:1,n:'DbContext #1',s:'bad'}]}
+  ]},
+
+ worker:{
+  tag:'One job, one scope', cls:'t-in',
+  msg:'<code>AddHostedService&lt;T&gt;</code> registers the worker as a <b>singleton</b>, and it starts before any request exists — so there is no ambient scope to inherit and a constructor-injected <code>DbContext</code> would be captive from the first line. Opening a scope per job restores the property you actually wanted: one unit of work, one change tracker, disposed when the job ends. This is the trace that shows why "scoped = per request" is a description of the HTTP host rather than a definition. There are no requests here at all.',
+  steps:[
+   {b:'Root provider · no request',bc:'root',t:'startup',c:'<code>AddHostedService&lt;OptimizationQueueWorker&gt;</code> — the worker is a singleton, resolved from the root provider.',
+    ops:[{l:'sg',id:1,n:'Worker #1',s:'new'},{l:'sg',id:2,n:'MetricCache #1',s:'new'}]},
+   {b:'Scope J1 · job 1',bc:'open',t:'job 1',c:'Job dequeued → <code>using var scope = scopes.CreateScope()</code>.',
+    ops:[{l:'sc',id:1,n:'DbContext #1',s:'new'}]},
+   {b:'Scope J1 closed',bc:'',t:'dispose',c:'Job finished, scope disposed, change tracker gone with it.',
+    ops:[{l:'sc',id:1,s:'gone'}]},
+   {b:'Scope J2 · job 2',bc:'open',t:'job 2',c:'Next job, next scope, a fresh context — while the worker itself has never been rebuilt.',
+    ops:[{l:'sc',id:2,n:'DbContext #2',s:'new'},{l:'sg',id:1,n:'Worker #1',s:'same'}]},
+   {b:'Scope J2 closed',bc:'',t:'dispose',c:'Disposed. The singleton lane holds exactly what it held at startup.',
+    ops:[{l:'sc',id:2,s:'gone'}]}
+  ]},
+
+ leak:{
+  tag:'Transient is not untracked', cls:'t-warn',
+  msg:'A transient <code>IDisposable</code> is still registered for disposal with <b>the scope that resolved it</b>. Resolve one from the root provider — or from inside a singleton, which amounts to the same thing — and that scope is the application itself. Nothing is released until shutdown, so memory climbs steadily under a flat request rate. That is the signature symptom: no leak in the code you wrote, a growing graph in the container. Anything disposable that is created many times per operation wants a factory and a <code>using</code> block, not a transient registration. <code>IDbContextFactory&lt;T&gt;</code> exists for exactly this.',
+  steps:[
+   {b:'Root provider · app lifetime',bc:'root',t:'startup',c:'A singleton scheduler resolves <code>ITileRenderer</code> (transient, <code>IDisposable</code>) once per job.',
+    ops:[{l:'sg',id:1,n:'Scheduler #1',s:'new'}]},
+   {t:'job 1',c:'New instance. Tracked by the root provider for disposal.',ops:[{l:'tr',id:1,n:'Renderer #1',s:'leak'}]},
+   {t:'job 2',c:'New instance. The first one is still held.',ops:[{l:'tr',id:2,n:'Renderer #2',s:'leak'}]},
+   {t:'job 3',c:'And another.',ops:[{l:'tr',id:3,n:'Renderer #3',s:'leak'}]},
+   {b:'Root provider · app lifetime',bc:'bad',t:'never',k:'warn',c:'Nothing is disposed, because the root provider\'s scope ends at <b>process shutdown</b>.',
+    ops:[{l:'tr',id:4,n:'…',s:'leak'}]}
+  ]}
+};
+
+var band=document.getElementById('band'),log=document.getElementById('log'),
+    V=document.getElementById('verdict'),timers=[];
+var LANES=['tr','sc','sg'];
+
+function reset(){
+ timers.forEach(clearTimeout);timers=[];
+ log.innerHTML='';
+ band.className='band';band.textContent='No scope open';
+ document.getElementById('l-tr').innerHTML='<span class="hint">cached nowhere</span>';
+ document.getElementById('l-sc').innerHTML='<span class="hint">cached in the scope</span>';
+ document.getElementById('l-sg').innerHTML='<span class="hint">cached in the root provider</span>';
+}
+
+function chip(op){
+ var id='ch-'+op.l+'-'+op.id,el=document.getElementById(id);
+ if(!el){
+  var lane=document.getElementById('l-'+op.l),h=lane.querySelector('.hint');
+  if(h)h.remove();
+  el=document.createElement('span');el.id=id;el.className='chip';
+  el.textContent=op.n||'';lane.appendChild(el);
+ }
+ el.className='chip '+op.s;
+ if(op.n)el.textContent=op.n;
+}
+
+function run(mode){
+ reset();
+ var s=S[mode];
+ Object.keys(S).forEach(function(m){
+   document.getElementById('s-'+m).setAttribute('aria-pressed',String(m===mode));});
+
+ var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,
+     gap=reduce?0:1000,d=0;
+
+ s.steps.forEach(function(st){
+  timers.push(setTimeout(function(){
+   if(st.b!==undefined){band.className='band'+(st.bc?' '+st.bc:'');band.textContent=st.b;}
+   (st.ops||[]).forEach(chip);
+   var p=document.createElement('p');
+   if(st.k)p.className=st.k;
+   p.innerHTML='<span>'+st.t+'</span><span>'+st.c+'</span>';
+   log.appendChild(p);
+  },d));
+  d+=gap;
+ });
+
+ timers.push(setTimeout(function(){
+  V.innerHTML='<span class="tag '+s.cls+'">'+s.tag+'</span>'+s.msg;
+ },d));
+}
+</script>
+</body>
+</html>

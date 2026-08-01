@@ -16,7 +16,7 @@ A question can only live in one chapter. Where two chapters both touch it, it's 
 |---|---|---|
 | [01 · The request pipeline](#ch01) ✅ | 16, 17, 18, 19, 24, 25, 33, 77, 83 | 9 |
 | [02 · Configuration as layers](#ch02) ✅ | 9, 20, 23, 70, 75, 76, 78, 79 | 8 |
-| [03 · DI and service lifetimes](#ch03) ⬜ | 21, 22, 61, 62, 63, 64, 65 | 7 |
+| [03 · DI and service lifetimes](#ch03) ✅ | 21, 22, 61, 62, 63, 64, 65 | 7 |
 | [04 · EF Core's mental model](#ch04) ⬜ | 28, 29, 56, 57, 58, 59, 60, 72 | 8 |
 | [05 · Async, threads and memory](#ch05) ⬜ | 30, 36, 37, 38, 39, 40, 95, 96, 97, 98 | 10 |
 | [06 · Authentication and authorization](#ch06) ⬜ | 27, 48, 50, 80, 81, 82, 84 | 7 |
@@ -69,9 +69,9 @@ A question can only live in one chapter. Where two chapters both touch it, it's 
 ---
 
 <a id="ch03"></a>
-## 03 · DI and service lifetimes ⬜
+## 03 · DI and service lifetimes ✅
 
-**The concept:** you declare *what* you need and *how long it lives*; the container decides *when it's built*. Most DI bugs are lifetime mismatches, and most "patterns" questions are DI questions in disguise.
+**The concept:** you declare *what* you need and *how long it lives*; the container decides *when it's built*. Most DI bugs are lifetime mismatches, and most "patterns" questions are DI questions in disguise. → [`concepts/03-di-and-service-lifetimes.md`](concepts/03-di-and-service-lifetimes.md)
 
 | # | Question | Why it's this chapter |
 |---|---|---|

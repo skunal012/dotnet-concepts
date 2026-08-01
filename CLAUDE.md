@@ -27,7 +27,8 @@ anki/               — tab-separated Anki import files
 
 - Scaffold commit: README, TEMPLATE.md, .gitignore
 - Chapter 01: the request pipeline (concepts/ + widgets/ + anki/)
-- Chapter 02: configuration as layers (concepts/ + anki/, no widget by design)
+- Chapter 02: configuration as layers (concepts/ + widgets/ + anki/)
+- Chapter 03: DI and service lifetimes (concepts/ + widgets/ + anki/)
 - QUESTIONS.md: all 100 questions assigned, verified no gaps or duplicates
 
 ## Chapter roadmap (dependency-ordered)
@@ -35,9 +36,9 @@ anki/               — tab-separated Anki import files
 | #  | Chapter                          | Status | Widget needed? |
 |----|----------------------------------|--------|----------------|
 | 01 | The request pipeline             | ✅     | ✅ done         |
-| 02 | Configuration as layers          | ✅     | no              |
-| 03 | DI and service lifetimes         | next   | yes             |
-| 04 | EF Core's mental model           | ⬜     | yes             |
+| 02 | Configuration as layers          | ✅     | ✅ done         |
+| 03 | DI and service lifetimes         | ✅     | ✅ done         |
+| 04 | EF Core's mental model           | next   | yes             |
 | 05 | Async, threads and memory        | ⬜     | yes             |
 | 06 | Authentication and authorization | ⬜     | no              |
 | 07 | Testing and TDD                  | ⬜     | no              |
@@ -67,7 +68,9 @@ Every chapter has: one-sentence thesis → why the concept exists → the mechan
 
 **Handbook** (`concepts/NN-slug.md`): The explanation. Written as an argument with a thesis running through it, not a reference page. This is the source of truth — the other two derive from it.
 
-**Widget** (`widgets/NN-slug.html`): Only for concepts where motion or ordering carries meaning (~5 of 12). Standalone HTML, works offline, no build step. System fonts fallback, dark mode via `prefers-color-scheme`, `prefers-reduced-motion` respected. See `widgets/01-request-pipeline.html` for the reference implementation.
+**Widget** (`widgets/NN-slug.html`): Only for concepts where motion or ordering carries meaning (~5 of 12). Standalone HTML, no build step, single file — all CSS and JS inline. Dark mode via `prefers-color-scheme`, `prefers-reduced-motion` respected, real `<button>`s with `aria-pressed` rather than clickable divs. IBM Plex is pulled from Google Fonts with a full system-font fallback stack, so the widget renders correctly offline — it just falls back to system fonts. See `widgets/01-request-pipeline.html` for the reference implementation.
+
+Every widget must be linked from its chapter (the `▶ **Widget:**` line under the thesis) and from the README roadmap table. A widget nobody can find from the handbook is a widget that does not exist.
 
 **Anki cards** (`anki/NN-slug.txt`): Tab-separated, tags in column 3. Cards test *why*, never *what*. "What is middleware?" is worthless. "What happens if UseAuthorization runs before UseRouting?" is unfakeable. Format:
 

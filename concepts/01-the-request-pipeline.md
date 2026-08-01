@@ -2,6 +2,8 @@
 
 > **The one idea:** ASP.NET Core is a *pipe*. A request travels inward through a chain of components, reaches your code, and the response travels back out through the same components in reverse. Everything else in this chapter is a consequence of that sentence.
 
+▶ **Widget:** [`widgets/01-request-pipeline.html`](../widgets/01-request-pipeline.html) — watch a request travel inward and unwind. Open it in any browser; no build step.
+
 ---
 
 ## Why this concept exists
@@ -209,4 +211,4 @@ Chapter 06 will pick up the questions this one only borders on: 27, 48, 50, 80 (
 
 ## Next
 
-→ `02-configuration-as-layers.md` — the other "ordered chain" concept, and it works the same way.
+→ [`02-configuration-as-layers.md`](02-configuration-as-layers.md) — the other "ordered chain" concept, and it works the same way.

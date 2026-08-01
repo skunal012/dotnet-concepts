@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configuration as layers — .NET concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F3F5F6; --card:#FFFFFF; --ink:#12181F; --ink2:#55606B; --ink3:#8A949E;
+  --rule:#DFE4E7;
+  --in:#0F6E6A; --in-bg:#DEEFED;
+  --out:#3A4C9E; --out-bg:#E4E8F7;
+  --warn:#96650A; --warn-bg:#F8EEDA;
+  --stop:#9C3330; --stop-bg:#F9E7E6;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#0E1216; --card:#161B21; --ink:#E6EAED; --ink2:#9AA5AF; --ink3:#6B7681;
+    --rule:#262E36;
+    --in:#5DCAA5; --in-bg:#10312B;
+    --out:#93A6EE; --out-bg:#1A2140;
+    --warn:#E0A73E; --warn-bg:#3A2B0C;
+    --stop:#E58380; --stop-bg:#3A1D1C;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:48px 24px 72px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink3);margin:0 0 14px}
+h1{font-family:var(--mono);font-size:30px;font-weight:500;letter-spacing:-.01em;margin:0 0 14px;line-height:1.2}
+.thesis{font-size:18px;color:var(--ink2);margin:0 0 40px;max-width:62ch}
+.thesis b{color:var(--ink);font-weight:500}
+
+.layout{display:grid;grid-template-columns:196px 1fr;gap:28px;align-items:start}
+.rail{display:flex;flex-direction:column;gap:2px;position:sticky;top:24px}
+.rail-h{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink3);padding:0 0 10px 12px}
+.scn{font-family:var(--sans);font-size:14px;text-align:left;background:none;border:0;
+  border-left:2px solid transparent;color:var(--ink2);padding:9px 12px;cursor:pointer;
+  border-radius:0 6px 6px 0;transition:background .15s,color .15s,border-color .15s;width:100%}
+.scn:hover{background:var(--card);color:var(--ink)}
+.scn[aria-pressed=true]{background:var(--card);color:var(--ink);border-left-color:var(--in);font-weight:500}
+.scn:focus-visible{outline:2px solid var(--in);outline-offset:-2px}
+.scn code{font-family:var(--mono);font-size:12.5px}
+
+.panel{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:20px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+.badge{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--ink3);
+  border:1px solid var(--rule);border-radius:5px;padding:4px 9px}
+.badge b{color:var(--ink2);font-weight:500}
+
+.axis{display:grid;grid-template-columns:24px 190px 1fr 132px;gap:10px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);padding:0 0 10px;border-bottom:1px solid var(--rule)}
+.axis .a-end{text-align:right;color:var(--in)}
+.stack{display:flex;flex-direction:column;gap:3px;padding-top:6px}
+.row{display:grid;grid-template-columns:24px 190px 1fr 132px;gap:10px;align-items:center;
+  padding:7px 0;border-radius:6px;transition:background .25s,opacity .3s}
+.row.probe{background:var(--paper)}
+.row.dead{opacity:.4}
+.num{font-family:var(--mono);font-size:11px;color:var(--ink3)}
+.prov{font-family:var(--mono);font-size:12.5px;color:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-family:var(--mono);font-size:11.5px;padding:3px 8px;border-radius:5px;
+  border:1px solid var(--rule);color:var(--ink3);background:transparent;
+  transition:background .25s,color .25s,border-color .25s,opacity .25s}
+.chip.none{border-style:dashed}
+.chip.win{background:var(--in-bg);color:var(--in);border-color:var(--in)}
+.chip.shadow{opacity:.5;text-decoration:line-through}
+.chip.warn{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
+.res{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  text-align:right;color:var(--ink3);transition:color .25s}
+.res.win{color:var(--in)} .res.warn{color:var(--warn)} .res.stop{color:var(--stop)}
+
+.verdict{margin-top:20px;border-top:1px solid var(--rule);padding-top:16px;
+  font-size:15px;color:var(--ink2);min-height:96px}
+.verdict code{font-family:var(--mono);font-size:13px;color:var(--ink);
+  background:var(--paper);padding:1px 5px;border-radius:4px}
+.verdict b{color:var(--ink);font-weight:500}
+.verdict .tag{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  display:block;margin-bottom:7px}
+.verdict .won{font-family:var(--mono);font-size:12.5px;color:var(--ink);display:block;
+  margin-bottom:10px;line-height:1.9}
+.t-in{color:var(--in)} .t-warn{color:var(--warn)} .t-stop{color:var(--stop)}
+
+footer{margin-top:44px;padding-top:20px;border-top:1px solid var(--rule);
+  font-size:14px;color:var(--ink3)}
+footer a{color:var(--ink2)}
+
+@media (max-width:760px){
+  .wrap{padding:32px 16px 56px}
+  .layout{grid-template-columns:1fr;gap:20px}
+  .rail{position:static;flex-direction:row;flex-wrap:wrap;gap:6px}
+  .rail-h{display:none}
+  .scn{width:auto;border:1px solid var(--rule);border-radius:6px;padding:7px 12px}
+  .scn[aria-pressed=true]{border-color:var(--in)}
+  .axis{grid-template-columns:22px 1fr 100px;gap:8px}
+  .axis .a-sup{display:none}
+  .row{grid-template-columns:22px 1fr 100px;gap:8px;row-gap:5px;align-items:start}
+  .num{grid-column:1;grid-row:1}
+  .prov{grid-column:2;grid-row:1;font-size:12px}
+  .res{grid-column:3;grid-row:1}
+  .chips{grid-column:2/4;grid-row:2}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Chapter 02 · .NET concepts</p>
+  <h1>Configuration as layers</h1>
+  <p class="thesis">Configuration is one <b>flat dictionary of string keys</b>, assembled by stacking ordered providers. Reading a key walks the stack <b>upward from the last provider registered</b> and returns the first hit. Nothing is merged in advance.</p>
+
+  <div class="layout">
+    <div class="rail">
+      <p class="rail-h">Lookup</p>
+      <button class="scn" id="s-normal"  aria-pressed="false" onclick="run('normal')">Four layers, one key</button>
+      <button class="scn" id="s-conn"    aria-pressed="false" onclick="run('conn')">Connection string, in prod</button>
+      <button class="scn" id="s-under"   aria-pressed="false" onclick="run('under')">Env var with one <code>_</code></button>
+      <button class="scn" id="s-array"   aria-pressed="false" onclick="run('array')">Shortened array</button>
+      <button class="scn" id="s-boot"    aria-pressed="false" onclick="run('boot')">Environment set in JSON</button>
+    </div>
+
+    <div class="panel">
+      <div class="meta" id="meta"></div>
+      <div class="axis">
+        <span>#</span><span>provider</span><span class="a-sup">supplies</span><span class="a-end">lookup ↑</span>
+      </div>
+      <div class="stack" id="stack"></div>
+      <div class="verdict" id="verdict"><span class="tag">Ready</span>Pick a lookup and watch the stack resolve it.</div>
+    </div>
+  </div>
+
+  <footer>Chapter 02 of <a href="../README.md">.NET concepts</a> · the written explanation lives in <code>concepts/02-configuration-as-layers.md</code></footer>
+</div>
+
+<script>
+var P=[
+ {k:'json',    n:'appsettings.json'},
+ {k:'envjson', n:'appsettings.{Env}.json'},
+ {k:'secrets', n:'user secrets'},
+ {k:'env',     n:'environment variables'},
+ {k:'cli',     n:'command-line arguments'}
+];
+
+var S={
+ normal:{
+  env:'Development', layer2:'appsettings.Development.json',
+  keys:['Optimizer:Solver:TimeLimitSeconds'],
+  supply:{json:['30'], envjson:['15'], env:['120'], cli:['5']},
+  tag:'Command line wins', cls:'t-in',
+  msg:'Four providers hold a value for the same key, and the lookup stops at the <b>first one it meets walking up</b> — the command line, because it was registered last. The three below it are not overridden or deleted; they are simply never reached. That reverse walk <b>is</b> the precedence rule. Note also that <code>Optimizer__Solver__TimeLimitSeconds=120</code> and <code>--Optimizer:Solver:TimeLimitSeconds=5</code> land on the identical key: <code>__</code> and <code>:</code> are two spellings of the same separator.'
+ },
+ conn:{
+  env:'Production', layer2:'appsettings.Production.json', off:['secrets'],
+  keys:['ConnectionStrings:Gros'],
+  supply:{json:['Host=localhost'], secrets:['Host=localhost;Password=dev'], env:['Host=db;Password=***']},
+  tag:'Environment variable wins', cls:'t-in',
+  msg:'Two things worth seeing here. First, <code>GetConnectionString("Gros")</code> is not a feature — it is a plain lookup of the key <code>ConnectionStrings:Gros</code>, which is why <code>ConnectionStrings__Gros</code> as an environment variable overrides it. Second, user secrets are <b>not in the stack at all</b> outside Development: they are keyed by a GUID in your <code>.csproj</code> and read from your home directory, neither of which exists on a server. Production secrets are the same problem solved by a different provider in the same list.'
+ },
+ under:{
+  env:'Production', layer2:'appsettings.Production.json', off:['secrets'],
+  keys:['Optimizer:MaxParallelism'],
+  supply:{json:['4']},
+  decoy:{env:'Optimizer_MaxParallelism = 8'},
+  tag:'Silently not an override', cls:'t-warn',
+  msg:'The environment variable provider maps a <b>double</b> underscore to <code>:</code>, because <code>:</code> is not a legal character in a variable name on Linux. A <b>single</b> <code>_</code> is not special — it is just a character in the key. So <code>Optimizer_MaxParallelism=8</code> creates a real configuration entry that nothing reads, the lookup falls all the way through to the base file, and the app runs with <code>4</code>. No exception, no warning, no log line.'
+ },
+ array:{
+  env:'Production', layer2:'appsettings.Production.json', off:['secrets'],
+  keys:['Solver:Strategies:0','Solver:Strategies:1','Solver:Strategies:2'],
+  supply:{json:['FirstFit','BestFit','Genetic'], envjson:['FirstFit','BestFit']},
+  tag:'Genetic still runs', cls:'t-stop',
+  msg:'This is three separate lookups, not one. The environment file was meant to cut the list to two strategies — but it only wrote <code>Strategies:0</code> and <code>Strategies:1</code>. Nothing wrote <code>Strategies:2</code>, so the base value survives and <code>Genetic</code> runs in production. Providers merge <b>per leaf key</b>, never per section; there is no operation that clears a section, because there are no sections — only keys that happen to end in digits.'
+ },
+ boot:{
+  env:'Production (defaulted)', layer2:'appsettings.Production.json',
+  only:['env','cli'],
+  keys:['ASPNETCORE_ENVIRONMENT'],
+  supply:{json:['Staging']},
+  tag:'The file is never consulted', cls:'t-stop',
+  msg:'Choosing <code>appsettings.{Environment}.json</code> requires already knowing the environment name — so the host first builds a <b>bootstrap stack</b> of command-line arguments plus <code>DOTNET_</code>/<code>ASPNETCORE_</code> environment variables, and only the two top layers exist inside it. Neither supplies anything here, so the name falls back to the default, <code>Production</code>. The value sitting in <code>appsettings.json</code> is never read: the file that would tell you which file to load is the one you are trying to choose.'
+ }
+};
+
+var stack=document.getElementById('stack'),meta=document.getElementById('meta'),
+    V=document.getElementById('verdict'),timers=[];
+
+function shortKey(k){var p=k.split(':');return p[p.length-1];}
+
+function render(s){
+ meta.innerHTML='<span class="badge">ASPNETCORE_ENVIRONMENT = <b>'+s.env+'</b></span>'+
+   s.keys.map(function(k){return '<span class="badge">reading <b>'+k+'</b></span>';}).join('');
+
+ stack.innerHTML=P.map(function(p,i){
+  var name=p.k==='envjson'?s.layer2:p.n;
+  var vals=(s.supply||{})[p.k]||[];
+  var chips=s.keys.map(function(key,j){
+    if(vals[j]===undefined)return '';
+    var label=(s.keys.length>1?shortKey(key)+' = ':'')+vals[j];
+    return '<span class="chip" id="c-'+p.k+'-'+j+'">'+label+'</span>';
+  }).join('');
+  if((s.decoy||{})[p.k])chips+='<span class="chip" id="c-'+p.k+'-d">'+s.decoy[p.k]+'</span>';
+  if(!chips)chips='<span class="chip none">—</span>';
+  return '<div class="row" id="r-'+p.k+'">'+
+    '<span class="num">'+(i+1)+'</span>'+
+    '<span class="prov">'+name+'</span>'+
+    '<span class="chips">'+chips+'</span>'+
+    '<span class="res" id="v-'+p.k+'"></span></div>';
+ }).join('');
+}
+
+function resolve(s){
+ var resolved={},steps=[];
+ for(var i=P.length-1;i>=0;i--){
+  var p=P[i],st={k:p.k,chips:[],res:'',cls:''};
+  var inStack=(!s.off||s.off.indexOf(p.k)<0)&&(!s.only||s.only.indexOf(p.k)>-1);
+  if(!inStack){st.dead=true;st.res=s.only?'not in bootstrap':'not registered';steps.push(st);continue;}
+  var vals=(s.supply||{})[p.k]||[],hit=false,shadow=false;
+  s.keys.forEach(function(key,j){
+   if(vals[j]===undefined)return;
+   if(resolved[key]){st.chips.push({j:j,c:'shadow'});shadow=true;}
+   else{resolved[key]=p.k;st.chips.push({j:j,c:'win'});hit=true;}
+  });
+  if((s.decoy||{})[p.k]){st.chips.push({j:'d',c:'warn'});st.res='different key';st.cls='warn';}
+  else if(hit){st.res=shadow?'partly wins':'first hit';st.cls='win';}
+  else if(shadow){st.res='shadowed';}
+  else st.res='no key';
+  steps.push(st);
+ }
+ return {steps:steps,resolved:resolved};
+}
+
+function reset(){timers.forEach(clearTimeout);timers=[];}
+
+function run(mode){
+ reset();
+ var s=S[mode];
+ Object.keys(S).forEach(function(m){
+   document.getElementById('s-'+m).setAttribute('aria-pressed',String(m===mode));});
+ render(s);
+
+ var r=resolve(s),
+     reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,
+     gap=reduce?0:420,d=0;
+
+ r.steps.forEach(function(st){
+  timers.push(setTimeout(function(){
+   var row=document.getElementById('r-'+st.k);
+   if(st.dead)row.classList.add('dead');else row.classList.add('probe');
+   st.chips.forEach(function(c){
+     document.getElementById('c-'+st.k+'-'+c.j).classList.add(c.c);});
+   var v=document.getElementById('v-'+st.k);
+   v.textContent=st.res;
+   if(st.cls)v.classList.add(st.cls);
+  },d));
+  d+=gap;
+ });
+
+ timers.push(setTimeout(function(){
+  var won=s.keys.map(function(k){
+    var by=r.resolved[k];
+    if(!by)return '<b>'+k+'</b> → nothing in the stack supplies it';
+    var i=P.map(function(p){return p.k;}).indexOf(by);
+    var name=by==='envjson'?s.layer2:P[i].n;
+    var j=s.keys.indexOf(k);
+    return '<b>'+k+'</b> = '+s.supply[by][j]+'  ← '+name;
+  }).join('<br>');
+  V.innerHTML='<span class="tag '+s.cls+'">'+s.tag+'</span>'+
+    '<span class="won">'+won+'</span>'+s.msg;
+ },d));
+}
+</script>
+</body>
+</html>
