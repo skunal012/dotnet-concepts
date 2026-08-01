@@ -213,4 +213,4 @@ Chapter 04 picks up the scoped service you will actually spend your life with: 2
 
 ## Next
 
-→ `04-ef-cores-mental-model.md` — the `DbContext` has been the example in every section here. Next it becomes the subject: why it is scoped, what the change tracker is doing, and why `SaveChanges` is the unit-of-work commit this chapter kept referring to.
+→ [`04-ef-cores-mental-model.md`](04-ef-cores-mental-model.md) — the `DbContext` has been the example in every section here. Next it becomes the subject: why it is scoped, what the change tracker is doing, and why `SaveChanges` is the unit-of-work commit this chapter kept referring to.
