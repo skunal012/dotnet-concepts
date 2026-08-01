@@ -29,6 +29,7 @@ anki/               — tab-separated Anki import files
 - Chapter 01: the request pipeline (concepts/ + widgets/ + anki/)
 - Chapter 02: configuration as layers (concepts/ + widgets/ + anki/)
 - Chapter 03: DI and service lifetimes (concepts/ + widgets/ + anki/)
+- Chapter 04: EF Core's mental model (concepts/ + widgets/ + anki/)
 - QUESTIONS.md: all 100 questions assigned, verified no gaps or duplicates
 
 ## Chapter roadmap (dependency-ordered)
@@ -38,8 +39,8 @@ anki/               — tab-separated Anki import files
 | 01 | The request pipeline             | ✅     | ✅ done         |
 | 02 | Configuration as layers          | ✅     | ✅ done         |
 | 03 | DI and service lifetimes         | ✅     | ✅ done         |
-| 04 | EF Core's mental model           | next   | yes             |
-| 05 | Async, threads and memory        | ⬜     | yes             |
+| 04 | EF Core's mental model           | ✅     | ✅ done         |
+| 05 | Async, threads and memory        | next   | yes             |
 | 06 | Authentication and authorization | ⬜     | no              |
 | 07 | Testing and TDD                  | ⬜     | no              |
 | 08 | Build and ship                   | ⬜     | no              |

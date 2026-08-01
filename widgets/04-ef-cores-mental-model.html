@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EF Core's mental model — .NET concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F3F5F6; --card:#FFFFFF; --ink:#12181F; --ink2:#55606B; --ink3:#8A949E;
+  --rule:#DFE4E7;
+  --in:#0F6E6A; --in-bg:#DEEFED;
+  --out:#3A4C9E; --out-bg:#E4E8F7;
+  --warn:#96650A; --warn-bg:#F8EEDA;
+  --stop:#9C3330; --stop-bg:#F9E7E6;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#0E1216; --card:#161B21; --ink:#E6EAED; --ink2:#9AA5AF; --ink3:#6B7681;
+    --rule:#262E36;
+    --in:#5DCAA5; --in-bg:#10312B;
+    --out:#93A6EE; --out-bg:#1A2140;
+    --warn:#E0A73E; --warn-bg:#3A2B0C;
+    --stop:#E58380; --stop-bg:#3A1D1C;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:48px 24px 72px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink3);margin:0 0 14px}
+h1{font-family:var(--mono);font-size:30px;font-weight:500;letter-spacing:-.01em;margin:0 0 14px;line-height:1.2}
+.thesis{font-size:18px;color:var(--ink2);margin:0 0 40px;max-width:62ch}
+.thesis b{color:var(--ink);font-weight:500}
+
+.layout{display:grid;grid-template-columns:196px 1fr;gap:28px;align-items:start}
+.rail{display:flex;flex-direction:column;gap:2px;position:sticky;top:24px}
+.rail-h{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink3);padding:0 0 10px 12px}
+.scn{font-family:var(--sans);font-size:14px;text-align:left;background:none;border:0;
+  border-left:2px solid transparent;color:var(--ink2);padding:9px 12px;cursor:pointer;
+  border-radius:0 6px 6px 0;transition:background .15s,color .15s,border-color .15s;width:100%}
+.scn:hover{background:var(--card);color:var(--ink)}
+.scn[aria-pressed=true]{background:var(--card);color:var(--ink);border-left-color:var(--in);font-weight:500}
+.scn:focus-visible{outline:2px solid var(--in);outline-offset:-2px}
+
+.panel{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:20px}
+.band{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);border:1px dashed var(--rule);border-radius:6px;padding:7px 11px;
+  margin:0 0 14px;transition:border-color .25s,color .25s,background .25s}
+.band.open{border-style:solid;border-color:var(--in);color:var(--in);background:var(--in-bg)}
+.band.root{border-style:solid;border-color:var(--out);color:var(--out);background:var(--out-bg)}
+.band.bad{border-style:solid;border-color:var(--stop);color:var(--stop);background:var(--stop-bg)}
+
+.tracker{border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.tracker-h{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);background:var(--paper);padding:7px 12px;border-bottom:1px solid var(--rule);
+  display:grid;grid-template-columns:132px 1fr 108px;gap:12px}
+.rows{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:132px 1fr 108px;gap:12px;align-items:center;
+  padding:9px 12px;border-bottom:1px solid var(--rule);
+  transition:background .25s,opacity .25s}
+.row:last-child{border-bottom:0}
+.row-k{font-family:var(--mono);font-size:12.5px;color:var(--ink)}
+.row-v{font-family:var(--mono);font-size:12px;color:var(--ink3)}
+.row-v b{color:var(--ink2);font-weight:400}
+.row-v i{font-style:normal;color:var(--in)}
+.row.gone{opacity:.35}
+.row.gone .row-k{text-decoration:line-through}
+.empty{padding:22px 12px;text-align:center;font-family:var(--mono);font-size:11.5px;
+  color:var(--ink3);opacity:.6}
+
+.state{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 8px;border-radius:5px;border:1px solid var(--rule);color:var(--ink3);
+  justify-self:start;transition:background .25s,color .25s,border-color .25s}
+.state.added{background:var(--in-bg);color:var(--in);border-color:var(--in)}
+.state.modified{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
+.state.deleted{background:var(--stop-bg);color:var(--stop);border-color:var(--stop)}
+.state.unchanged{background:transparent;color:var(--ink2);border-color:var(--rule)}
+.state.detached{background:transparent;color:var(--ink3);border-color:var(--rule);border-style:dashed}
+/* not entity states — these rows describe the database, not the tracker */
+.state.elsewhere{background:var(--out-bg);color:var(--out);border-color:var(--out)}
+.state.overwritten{background:var(--stop-bg);color:var(--stop);border-color:var(--stop)}
+
+.sql{margin-top:14px;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.sql-h{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);background:var(--paper);padding:7px 12px;border-bottom:1px solid var(--rule)}
+.sql-b{padding:12px;min-height:76px;font-family:var(--mono);font-size:12.5px;line-height:1.75}
+.sql-b div{color:var(--ink2);white-space:pre-wrap;word-break:break-word}
+.sql-b div b{color:var(--ink);font-weight:500}
+.sql-b .none{color:var(--ink3);opacity:.6}
+
+.log{margin-top:16px;border-top:1px solid var(--rule);padding-top:12px;min-height:100px}
+.log p{margin:0 0 6px;font-size:14px;color:var(--ink2);display:grid;
+  grid-template-columns:86px 1fr;gap:10px;align-items:baseline}
+.log p span:first-child{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink3)}
+.log p b{color:var(--ink);font-weight:500}
+.log p code{font-family:var(--mono);font-size:12.5px}
+.log p.bad{color:var(--stop)} .log p.bad span{color:var(--stop)}
+.log p.warn{color:var(--warn)} .log p.warn span{color:var(--warn)}
+
+.verdict{margin-top:18px;border-top:1px solid var(--rule);padding-top:16px;
+  font-size:15px;color:var(--ink2);min-height:84px}
+.verdict code{font-family:var(--mono);font-size:13px;color:var(--ink);
+  background:var(--paper);padding:1px 5px;border-radius:4px}
+.verdict b{color:var(--ink);font-weight:500}
+.verdict .tag{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  display:block;margin-bottom:7px}
+.t-in{color:var(--in)} .t-warn{color:var(--warn)} .t-stop{color:var(--stop)}
+
+footer{margin-top:44px;padding-top:20px;border-top:1px solid var(--rule);
+  font-size:14px;color:var(--ink3)}
+footer a{color:var(--ink2)}
+
+@media (max-width:760px){
+  .wrap{padding:32px 16px 56px}
+  .layout{grid-template-columns:1fr;gap:20px}
+  .rail{position:static;flex-direction:row;flex-wrap:wrap;gap:6px}
+  .rail-h{display:none}
+  .scn{width:auto;border:1px solid var(--rule);border-radius:6px;padding:7px 12px}
+  .scn[aria-pressed=true]{border-color:var(--in)}
+  .tracker-h{display:none}
+  .row{grid-template-columns:1fr;gap:5px}
+  .log p{grid-template-columns:1fr;gap:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Chapter 04 · .NET concepts</p>
+  <h1>EF Core's mental model</h1>
+  <p class="thesis">You never write the <code>UPDATE</code>. The context keeps a <b>snapshot</b> of every entity it loaded, and <code>SaveChanges</code> compares live values against those snapshots to work out the SQL. Watch the snapshot column — that is the whole mechanism.</p>
+
+  <div class="layout">
+    <div class="rail">
+      <p class="rail-h">Trace</p>
+      <button class="scn" id="s-modify" aria-pressed="false" onclick="run('modify')">Load and change one field</button>
+      <button class="scn" id="s-graph"  aria-pressed="false" onclick="run('graph')">Add, delete, and a no-op</button>
+      <button class="scn" id="s-notrack" aria-pressed="false" onclick="run('notrack')"><code>AsNoTracking</code></button>
+      <button class="scn" id="s-update" aria-pressed="false" onclick="run('update')">Detached, then <code>Update()</code></button>
+    </div>
+
+    <div class="panel">
+      <p class="band" id="band">No context</p>
+
+      <div class="tracker">
+        <div class="tracker-h"><span>Tracked entity</span><span>Snapshot vs live</span><span>State</span></div>
+        <div class="rows" id="rows"><div class="empty">change tracker empty</div></div>
+      </div>
+
+      <div class="sql">
+        <div class="sql-h">SQL on SaveChanges</div>
+        <div class="sql-b" id="sql"><div class="none">nothing yet</div></div>
+      </div>
+
+      <div class="log" id="log"></div>
+      <div class="verdict" id="verdict"><span class="tag">Ready</span>Pick a trace. The state column is never something you set — it is derived by comparing the live object to the snapshot taken when it loaded.</div>
+    </div>
+  </div>
+
+  <footer>Chapter 04 of <a href="../README.md">.NET concepts</a> · the written explanation lives in <code>concepts/04-ef-cores-mental-model.md</code></footer>
+</div>
+
+<script>
+/* row op: {id, k:key label, v:snapshot-vs-live html, s:state class, gone:bool} */
+var S={
+ modify:{
+  tag:'One column, not the row', cls:'t-in',
+  msg:'The property set is ordinary C# — no EF method was called, and yet the state changed. That is the tracker comparing the live object against the snapshot it took at load time. Because it knows <i>which</i> property moved, the generated <code>UPDATE</code> names one column rather than the whole row, and the <code>WHERE</code> clause can carry the original concurrency token so a competing write is detected instead of silently overwritten. After <code>SaveChanges</code> the snapshot is replaced with the new values and the entity is <b>Unchanged</b> again — the same context is now ready for another unit of work.',
+  steps:[
+   {b:'Scope open · new DbContext',bc:'open',t:'query',c:'<code>db.Racks.FirstAsync(r =&gt; r.Id == 12)</code> — one row materialised, and a snapshot taken of it.',
+    rows:[{id:1,k:'Rack #12',v:'height <b>2</b> · code <b>A-04</b>',s:'unchanged'}]},
+   {t:'query',c:'The same row again, a second round trip. The identity map matches on key, so you get the <b>same instance</b> — not a second object.',
+    rows:[{id:1,k:'Rack #12',v:'height <b>2</b> · code <b>A-04</b> <i>← same instance</i>',s:'unchanged'}]},
+   {t:'mutate',c:'<code>rack.Height = 4;</code> Plain property set. No EF call.',
+    rows:[{id:1,k:'Rack #12',v:'height 2 → <i>4</i> · code <b>A-04</b>',s:'modified'}],
+    sql:['<b>-- pending</b>']},
+   {t:'savechanges',c:'The diff runs. One property differs, so one column is written — inside a transaction you did not have to open.',
+    sql:['<b>BEGIN</b>','<b>UPDATE</b> racks <b>SET</b> height = 4','  <b>WHERE</b> id = 12 <b>AND</b> xmin = 8814;','<b>COMMIT</b>']},
+   {b:'Scope open · changes accepted',bc:'open',t:'accept',c:'Snapshot replaced with the new values. The entity is <b>Unchanged</b> again.',
+    rows:[{id:1,k:'Rack #12',v:'height <b>4</b> · code <b>A-04</b>',s:'unchanged'}]}
+  ]},
+
+ graph:{
+  tag:'Three states, one transaction', cls:'t-in',
+  msg:'Three entities in three different states produce three different statements, ordered by <b>foreign-key dependency</b> rather than by the order you touched them — the container is inserted before the row that references it, whatever your code did. The fourth entity is the interesting one: it was loaded and read, never changed, so it stays <b>Unchanged</b> and generates nothing at all. That is why an <code>UPDATE</code> you did not expect is always a real difference somewhere, and why <code>SaveChanges</code> on a context with nothing pending is close to free. All of it commits or none of it does; a single <code>SaveChangesAsync</code> is already a transaction.',
+  steps:[
+   {b:'Scope open · new DbContext',bc:'open',t:'query',c:'Two racks loaded. Snapshots taken.',
+    rows:[{id:1,k:'Rack #12',v:'height <b>2</b>',s:'unchanged'},
+          {id:2,k:'Rack #77',v:'height <b>3</b>',s:'unchanged'}]},
+   {t:'add',c:'<code>db.Containers.Add(new Container { RackId = 12 })</code> — tracked immediately, with no key yet.',
+    rows:[{id:3,k:'Container #—',v:'id <i>not assigned</i> · rack 12',s:'added'}]},
+   {t:'mutate',c:'<code>rack12.Height = 4;</code>',
+    rows:[{id:1,k:'Rack #12',v:'height 2 → <i>4</i>',s:'modified'}]},
+   {t:'remove',c:'<code>db.Racks.Remove(rack77)</code> — still tracked, now marked for deletion.',
+    rows:[{id:2,k:'Rack #77',v:'height <b>3</b>',s:'deleted'}]},
+   {t:'read only',c:'A fourth entity is loaded and read, never written.',
+    rows:[{id:4,k:'Rack #91',v:'height <b>2</b> · read only',s:'unchanged'}]},
+   {t:'savechanges',c:'Four tracked entities, three statements. The untouched one contributes nothing.',
+    sql:['<b>BEGIN</b>','<b>UPDATE</b> racks <b>SET</b> height = 4 <b>WHERE</b> id = 12;','<b>INSERT INTO</b> containers (rack_id) <b>VALUES</b> (12)','  <b>RETURNING</b> id;','<b>DELETE FROM</b> racks <b>WHERE</b> id = 77;','<b>COMMIT</b>']},
+   {b:'Scope open · changes accepted',bc:'open',t:'accept',c:'The generated key is read back into the object. The deleted entity becomes <b>Detached</b> — the context has no further business with it.',
+    rows:[{id:1,k:'Rack #12',v:'height <b>4</b>',s:'unchanged'},
+          {id:3,k:'Container #508',v:'id <i>508</i> · rack 12',s:'unchanged'},
+          {id:2,k:'Rack #77',v:'removed from the tracker',s:'detached',gone:true}]}
+  ]},
+
+ notrack:{
+  tag:'No snapshot, no diff, no SQL', cls:'t-warn',
+  msg:'<code>AsNoTracking</code> materialises objects and forgets them. No snapshot is stored, so the tracker has nothing to compare against and <code>SaveChanges</code> has nothing to write — the mutation is real in memory and simply never reaches the database. That silence is the trap worth internalising: a no-tracking query on a write path fails quietly rather than throwing. It is also exactly why it is the right default for read paths. The two objects here are a second tell — without an identity map, the same row materialises twice as two independent instances. <b>In GROS</b>, the optimizer reads tens of thousands of racks it never mutates; tracking them would mean a snapshot each, re-scanned on every change detection, against a change set guaranteed to be empty.',
+  steps:[
+   {b:'Scope open · new DbContext',bc:'open',t:'query',c:'<code>db.Racks.AsNoTracking().Where(...).ToListAsync()</code> — rows materialise, nothing is filed.',
+    rows:[{id:1,k:'Rack #12',v:'<i>not tracked</i> — no snapshot stored',s:'detached'}]},
+   {t:'query',c:'The same row again. With no identity map to match on, it materialises as a <b>second, separate object</b>.',
+    rows:[{id:2,k:'Rack #12',v:'<i>not tracked</i> — a different instance',s:'detached'}]},
+   {t:'mutate',c:'<code>rack.Height = 4;</code> The object in memory really does change.',
+    rows:[{id:1,k:'Rack #12',v:'height 4 <i>in memory only</i>',s:'detached'}]},
+   {t:'savechanges',c:'The tracker is empty, so the diff has nothing to diff. No statement is generated and no error is raised.',k:'warn',
+    sql:['<span class="none">-- no tracked entities, no SQL</span>']},
+   {b:'Scope open · nothing written',bc:'',t:'result',c:'The change is <b>lost silently</b> — the most expensive kind of quiet.',k:'warn'}
+  ]},
+
+ update:{
+  tag:'Update() writes everything', cls:'t-stop',
+  msg:'An entity that arrived as JSON has no snapshot — the context never loaded it, so it cannot know which properties moved. <code>db.Update()</code> resolves that by assuming <b>all of them</b> did, which is why the generated statement lists every column including the ones nobody touched. Two costs follow. The write is wider than it needs to be, and — the real one — it reintroduces the lost-update problem: a field changed by someone else between your read and your write is overwritten with the stale value the client posted back. The fix is to load the entity inside the current context and apply only the fields the request is allowed to change, so the diff has a real snapshot to work against.',
+  steps:[
+   {b:'Scope open · new DbContext',bc:'open',t:'request',c:'A rack arrives as JSON from a <code>PUT</code>. It is a bag of values — <b>Detached</b>, no snapshot, no identity.',
+    rows:[{id:1,k:'Rack #12 (posted)',v:'<i>no snapshot</i> — never loaded here',s:'detached'}]},
+   {t:'meanwhile',c:'Another request has already changed <code>code</code> since this client last read the row.',k:'warn',
+    rows:[{id:9,k:'racks.code in DB',v:'A-04 → <i>B-11</i> · by someone else',s:'elsewhere'}]},
+   {t:'attach',c:'<code>db.Update(rack)</code> — with nothing to compare against, every property is marked <b>Modified</b>.',
+    rows:[{id:1,k:'Rack #12 (posted)',v:'all properties assumed changed',s:'modified'}]},
+   {t:'savechanges',c:'Every column is written, including the one the client never intended to send.',k:'bad',
+    sql:['<b>BEGIN</b>','<b>UPDATE</b> racks <b>SET</b> height = 4, <b>code = \'A-04\'</b>,','    depth = 1200, warehouse_id = 3','  <b>WHERE</b> id = 12;','<b>COMMIT</b>']},
+   {b:'Concurrent edit overwritten',bc:'bad',t:'result',c:'The other request\'s <code>code</code> is gone — <b>lost update</b>, no exception, no concurrency token to catch it.',k:'bad',
+    rows:[{id:9,k:'racks.code in DB',v:'B-11 → <i>A-04</i> · silently reverted',s:'overwritten'}]}
+  ]}
+};
+
+var band=document.getElementById('band'),log=document.getElementById('log'),
+    rowsEl=document.getElementById('rows'),sqlEl=document.getElementById('sql'),
+    V=document.getElementById('verdict'),timers=[];
+
+function reset(){
+ timers.forEach(clearTimeout);timers=[];
+ log.innerHTML='';
+ band.className='band';band.textContent='No context';
+ rowsEl.innerHTML='<div class="empty">change tracker empty</div>';
+ sqlEl.innerHTML='<div class="none">nothing yet</div>';
+}
+
+function row(r){
+ var id='r-'+r.id,el=document.getElementById(id),empty=rowsEl.querySelector('.empty');
+ if(empty)empty.remove();
+ if(!el){
+  el=document.createElement('div');el.id=id;
+  el.innerHTML='<span class="row-k"></span><span class="row-v"></span><span class="state"></span>';
+  rowsEl.appendChild(el);
+ }
+ el.className='row'+(r.gone?' gone':'');
+ el.children[0].textContent=r.k;
+ el.children[1].innerHTML=r.v;
+ el.children[2].className='state '+r.s;
+ el.children[2].textContent=r.s;
+}
+
+function run(mode){
+ reset();
+ var s=S[mode];
+ Object.keys(S).forEach(function(m){
+   document.getElementById('s-'+m).setAttribute('aria-pressed',String(m===mode));});
+
+ var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,
+     gap=reduce?0:1150,d=0;
+
+ s.steps.forEach(function(st){
+  timers.push(setTimeout(function(){
+   if(st.b!==undefined){band.className='band'+(st.bc?' '+st.bc:'');band.textContent=st.b;}
+   (st.rows||[]).forEach(row);
+   if(st.sql)sqlEl.innerHTML=st.sql.map(function(l){return '<div>'+l+'</div>';}).join('');
+   var p=document.createElement('p');
+   if(st.k)p.className=st.k;
+   p.innerHTML='<span>'+st.t+'</span><span>'+st.c+'</span>';
+   log.appendChild(p);
+  },d));
+  d+=gap;
+ });
+
+ timers.push(setTimeout(function(){
+  V.innerHTML='<span class="tag '+s.cls+'">'+s.tag+'</span>'+s.msg;
+ },d));
+}
+</script>
+</body>
+</html>

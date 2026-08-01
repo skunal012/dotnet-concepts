@@ -17,7 +17,7 @@ A question can only live in one chapter. Where two chapters both touch it, it's 
 | [01 · The request pipeline](#ch01) ✅ | 16, 17, 18, 19, 24, 25, 33, 77, 83 | 9 |
 | [02 · Configuration as layers](#ch02) ✅ | 9, 20, 23, 70, 75, 76, 78, 79 | 8 |
 | [03 · DI and service lifetimes](#ch03) ✅ | 21, 22, 61, 62, 63, 64, 65 | 7 |
-| [04 · EF Core's mental model](#ch04) ⬜ | 28, 29, 56, 57, 58, 59, 60, 72 | 8 |
+| [04 · EF Core's mental model](#ch04) ✅ | 28, 29, 56, 57, 58, 59, 60, 72 | 8 |
 | [05 · Async, threads and memory](#ch05) ⬜ | 30, 36, 37, 38, 39, 40, 95, 96, 97, 98 | 10 |
 | [06 · Authentication and authorization](#ch06) ⬜ | 27, 48, 50, 80, 81, 82, 84 | 7 |
 | [07 · Testing and TDD](#ch07) ⬜ | 41, 42, 43, 44, 45 | 5 |
@@ -86,9 +86,9 @@ A question can only live in one chapter. Where two chapters both touch it, it's 
 ---
 
 <a id="ch04"></a>
-## 04 · EF Core's mental model ⬜
+## 04 · EF Core's mental model ✅
 
-**The concept:** the `DbContext` is a unit of work with a change tracker — you mutate tracked objects, and `SaveChanges` diffs and translates. Everything (migrations, transactions, performance) follows from that.
+**The concept:** the `DbContext` is a unit of work with a change tracker — you mutate tracked objects, and `SaveChanges` diffs and translates. Everything (migrations, transactions, performance) follows from that. → [`concepts/04-ef-cores-mental-model.md`](concepts/04-ef-cores-mental-model.md)
 
 | # | Question | Why it's this chapter |
 |---|---|---|
