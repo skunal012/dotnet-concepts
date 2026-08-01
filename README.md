@@ -48,7 +48,7 @@ Ordered by dependency, not by difficulty. Auth needs the pipeline. EF Core is ea
 | 02 | Configuration as layers | [✅](concepts/02-configuration-as-layers.md) | [✅](widgets/02-configuration-as-layers.html) | [✅](anki/02-configuration-as-layers.txt) |
 | 03 | DI and service lifetimes | [✅](concepts/03-di-and-service-lifetimes.md) | [✅](widgets/03-di-and-service-lifetimes.html) | [✅](anki/03-di-and-service-lifetimes.txt) |
 | 04 | EF Core's mental model | [✅](concepts/04-ef-cores-mental-model.md) | [✅](widgets/04-ef-cores-mental-model.html) | [✅](anki/04-ef-cores-mental-model.txt) |
-| 05 | Async, threads and memory | ⬜ | ⬜ | ⬜ |
+| 05 | Async, threads and memory | [✅](concepts/05-async-threads-and-memory.md) | [✅](widgets/05-async-threads-and-memory.html) | [✅](anki/05-async-threads-and-memory.txt) |
 | 06 | Authentication and authorization | ⬜ | — | ⬜ |
 | 07 | Testing and TDD | ⬜ | — | ⬜ |
 | 08 | Build and ship | ⬜ | — | ⬜ |
