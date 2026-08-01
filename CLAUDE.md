@@ -27,7 +27,7 @@ anki/               — tab-separated Anki import files
 
 - Scaffold commit: README, TEMPLATE.md, .gitignore
 - Chapter 01: the request pipeline (concepts/ + widgets/ + anki/)
-- Chapter 02: configuration as layers (concepts/ + anki/, no widget by design)
+- Chapter 02: configuration as layers (concepts/ + widgets/ + anki/)
 - QUESTIONS.md: all 100 questions assigned, verified no gaps or duplicates
 
 ## Chapter roadmap (dependency-ordered)
@@ -35,7 +35,7 @@ anki/               — tab-separated Anki import files
 | #  | Chapter                          | Status | Widget needed? |
 |----|----------------------------------|--------|----------------|
 | 01 | The request pipeline             | ✅     | ✅ done         |
-| 02 | Configuration as layers          | ✅     | no              |
+| 02 | Configuration as layers          | ✅     | ✅ done         |
 | 03 | DI and service lifetimes         | next   | yes             |
 | 04 | EF Core's mental model           | ⬜     | yes             |
 | 05 | Async, threads and memory        | ⬜     | yes             |
