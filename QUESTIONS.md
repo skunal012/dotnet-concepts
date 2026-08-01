@@ -21,7 +21,7 @@ A question can only live in one chapter. Where two chapters both touch it, it's 
 | [05 · Async, threads and memory](#ch05) ✅ | 30, 36, 37, 38, 39, 40, 95, 96, 97, 98 | 10 |
 | [06 · Authentication and authorization](#ch06) ✅ | 27, 48, 50, 80, 81, 82, 84 | 7 |
 | [07 · Testing and TDD](#ch07) ✅ | 41, 42, 43, 44, 45 | 5 |
-| [08 · Build and ship](#ch08) ⬜ | 13, 46, 47, 49, 51, 52, 54, 55 | 8 |
+| [08 · Build and ship](#ch08) ✅ | 13, 46, 47, 49, 51, 52, 54, 55 | 8 |
 | [09 · Distributed and real-time](#ch09) ⬜ | 31, 32, 35, 53, 89 | 5 |
 | [10 · Platform and history](#ch10) ⬜ | 1, 2, 3, 7, 14, 85, 86, 87, 88, 93, 94, 99, 100 | 13 |
 | [11 · Interop and migration](#ch11) ⬜ | 26, 34, 66, 67, 68, 69, 90, 91, 92 | 9 |
@@ -156,9 +156,9 @@ A question can only live in one chapter. Where two chapters both touch it, it's 
 ---
 
 <a id="ch08"></a>
-## 08 · Build and ship ⬜
+## 08 · Build and ship ✅
 
-**The concept:** `publish` produces a self-sufficient folder; everything after that — containers, orchestrators, serverless — is different answers to "where does that folder run and who scales it".
+**The concept:** `publish` produces a self-sufficient folder; everything after that — containers, orchestrators, serverless — is different answers to "where does that folder run and who scales it". → [`concepts/08-build-and-ship.md`](concepts/08-build-and-ship.md)
 
 | # | Question | Why it's this chapter |
 |---|---|---|
